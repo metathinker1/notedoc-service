@@ -1,5 +1,6 @@
 
 from notesrvc.model.notecoll import NoteCollection
+from notesrvc.model.note import Note
 
 
 class NoteDocument:
@@ -15,3 +16,6 @@ class NoteDocument:
 
     def size(self):
         return self.notecoll.size()
+
+    def add_note(self, note: Note):
+        self.notecoll.add_note(note)

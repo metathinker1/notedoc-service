@@ -46,15 +46,20 @@ class NoteDocOutlineParser(NoteDocParser):
         parse_state.note = Note()
         parse_state.note.note_id = 'N' + str(parse_state.notedoc.size())
         parse_state.body_text_lines = []
+
+        outline_level = int(line[6:-1])
+        parent_loc = NoteDocOutlineParser._calc_parent_outline_location(outline_level, parse_state)
+        parse_state.notedoc.append_note(parse_state.note, parent_loc)
+
         return NoteDocOutlineParser._summary_text
 
     @staticmethod
-    def _summary_text(line: str, parse_state: NoteDocument):
+    def _summary_text(line: str, parse_state: NoteDocOutlineParseState):
         parse_state.note.summary_text = line
         return NoteDocOutlineParser._body_text
 
     @staticmethod
-    def _body_text(line: str, parse_state: NoteDocument):
+    def _body_text(line: str, parse_state: NoteDocOutlineParseState):
         match = re.search(BEGIN_NOTE_PATTERN, line)
         if match:
             return NoteDocOutlineParser._new_note(line, parse_state)
@@ -62,5 +67,23 @@ class NoteDocOutlineParser(NoteDocParser):
             parse_state.body_text_lines.append(line)
             return NoteDocOutlineParser._body_text
 
+    # TODO: Consider moving to NoteDocOutlineParseState
+    @staticmethod
+    def _calc_parent_outline_location(outline_level: int, parse_state: NoteDocOutlineParseState):
+        if outline_level > len(parse_state.outline_location):
+            parse_state.outline_location.append(0)
+        elif outline_level < len(parse_state.outline_location):
+            num_levels = len(parse_state.outline_location) - outline_level
+            for ix in range(num_levels):
+                parse_state.outline_location.pop()
+            val = parse_state.outline_location.pop()
+            parse_state.outline_location.append(val + 1)
+        else:
+            val = parse_state.outline_location.pop()
+            parse_state.outline_location.append(val + 1)
 
+        if len(parse_state.outline_location) > 1:
+            return parse_state.outline_location[:-1]
+        else:
+            return None
 
