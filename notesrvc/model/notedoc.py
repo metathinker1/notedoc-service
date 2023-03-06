@@ -12,3 +12,6 @@ class NoteDocument:
         # TODO: Research: best practice: field with type, or check instance type; or antipattern because polymorphic
         self.structure = notedoc_metadata.get('NoteDocStructure')
         self.notecoll = NoteCollection(self.notedoc_id)
+
+    def size(self):
+        return self.notecoll.size()
