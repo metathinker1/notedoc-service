@@ -15,7 +15,7 @@ class NoteDocAspect:
 
 BEGIN_NOTE_PATTERN = '<Note [0-9]*>'
 BEGIN_JOURNAL_NOTE_PATTERN = r'<\d{4}.\d{2}.\d{2}[ ]\d{2}:\d{2}>'
-# r'\s+(?=\d{2}(?=\d{2})?-\d{1,2}-d{1,2}\b)'
+BEGIN_TEXT_TAG = '{TextTag:'
 
 DATE_TIME_FORMAT = '%Y.%m.%d %H:%M'
 
