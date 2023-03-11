@@ -13,20 +13,9 @@ class NoteDocParser:
     def __init__(self):
         pass
 
-    # TODO: Make abstract
-    def parse_text(self, raw_text: str):
-        pass
-
-
-# TODO: Consider: rename: NoteDocParser
-class NoteDocOutlineParser(NoteDocParser):
-
-    def __init__(self):
-        pass
-
     def parse_text(self, raw_text: str, notedoc: NoteDocument):
         parse_state = NoteDocOutlineParseState(notedoc)
-        parse = NoteDocOutlineParser._start
+        parse = NoteDocParser._start
         lines = raw_text.split('\n')
         for line in lines:
             parse = parse(line, parse_state)
@@ -38,11 +27,11 @@ class NoteDocOutlineParser(NoteDocParser):
         note_match = re.search(BEGIN_NOTE_PATTERN, line)
         journal_note_match = re.search(BEGIN_JOURNAL_NOTE_PATTERN, line)
         if note_match:
-            return NoteDocOutlineParser._new_note(line, parse_state)
+            return NoteDocParser._new_note(line, parse_state)
         elif journal_note_match:
-            return NoteDocOutlineParser._new_journal_note(line, parse_state)
+            return NoteDocParser._new_journal_note(line, parse_state)
         else:
-            return NoteDocOutlineParser._start
+            return NoteDocParser._start
 
     @staticmethod
     def _new_note(line: str, parse_state: NoteDocOutlineParseState):
@@ -53,10 +42,10 @@ class NoteDocOutlineParser(NoteDocParser):
         parse_state.body_text_lines = []
 
         outline_level = int(line[6:-1])
-        parent_loc = NoteDocOutlineParser._calc_parent_outline_location(outline_level, parse_state)
+        parent_loc = NoteDocParser._calc_parent_outline_location(outline_level, parse_state)
         parse_state.notedoc.append_note(parse_state.note, parent_loc)
 
-        return NoteDocOutlineParser._summary_text
+        return NoteDocParser._summary_text
 
     @staticmethod
     def _new_journal_note(line: str, parse_state: NoteDocOutlineParseState):
@@ -70,24 +59,24 @@ class NoteDocOutlineParser(NoteDocParser):
         parse_state.body_text_lines = []
         parse_state.notedoc.append_note(parse_state.note)
 
-        return NoteDocOutlineParser._summary_text
+        return NoteDocParser._summary_text
 
     @staticmethod
     def _summary_text(line: str, parse_state: NoteDocOutlineParseState):
         parse_state.note.summary_text = line
-        return NoteDocOutlineParser._body_text
+        return NoteDocParser._body_text
 
     @staticmethod
     def _body_text(line: str, parse_state: NoteDocOutlineParseState):
         note_match = re.search(BEGIN_NOTE_PATTERN, line)
         journal_note_match = re.search(BEGIN_JOURNAL_NOTE_PATTERN, line)
         if note_match:
-            return NoteDocOutlineParser._new_note(line, parse_state)
+            return NoteDocParser._new_note(line, parse_state)
         elif journal_note_match:
-            return NoteDocOutlineParser._new_journal_note(line, parse_state)
+            return NoteDocParser._new_journal_note(line, parse_state)
         else:
             parse_state.body_text_lines.append(line)
-            return NoteDocOutlineParser._body_text
+            return NoteDocParser._body_text
 
     # TODO: Consider moving to NoteDocOutlineParseState
     @staticmethod

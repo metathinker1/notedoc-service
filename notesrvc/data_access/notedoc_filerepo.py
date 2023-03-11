@@ -1,6 +1,6 @@
 from notesrvc.constants import NoteDocAspect, NoteDocStructure
 import notesrvc.service.notedoc_factory as notedoc_factory
-from notesrvc.service.nodedoc_parser import NoteDocOutlineParser
+from notesrvc.service.nodedoc_parser import NoteDocParser
 
 NOTEDOC_FILE_REPO_PATH = '/Users/robertwood/Google Drive/My Drive/AncNoteDocRepo/_Ancestry'
 
@@ -9,7 +9,7 @@ class NoteDocFileRepo:
 
     def __init__(self):
         self.notedoc_repo_cache = {}
-        self.notedoc_outline_parser = NoteDocOutlineParser()
+        self.notedoc_parser = NoteDocParser()
 
     def get_notedoc(self, file_name: str):
         if file_name in self.notedoc_repo_cache:
@@ -32,7 +32,7 @@ class NoteDocFileRepo:
         notedoc = notedoc_factory.create_notedoc(notedoc_metadata)
 
         # TODO: do parsing
-        self.notedoc_outline_parser.parse_text(notedoc_text, notedoc)
+        self.notedoc_parser.parse_text(notedoc_text, notedoc)
 
         self.notedoc_repo_cache[file_name] = notedoc
 
