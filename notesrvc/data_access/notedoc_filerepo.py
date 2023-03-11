@@ -56,9 +56,16 @@ class NoteDocFileRepo:
 
 
 if __name__ == '__main__':
+    notedoc_filerepo = NoteDocFileRepo()
+
     # file_name = 'Project.APM_AlertRouter.nodoc'
     file_name = 'Project.APMGovernanceTool.nodoc'
-    notedoc_filerepo = NoteDocFileRepo()
     notedoc = notedoc_filerepo.get_notedoc(file_name)
     notedoc_dict = notedoc.render_as_dict()
-    print('stop here')
+    print(f'notedoc_dict: {notedoc_dict}')
+
+    file_name = 'Project.APMGovernanceTool.nwdoc'
+    notedoc = notedoc_filerepo.get_notedoc(file_name)
+    notedoc_dict = notedoc.render_as_dict()
+    print(f'notedoc_dict: {notedoc_dict}')
+

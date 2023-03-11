@@ -1,10 +1,11 @@
 import re
+from datetime import datetime
 
 from notesrvc.model.notedoc import NoteDocument
-from notesrvc.model.note import Note
+from notesrvc.model.note import Note, JournalNote
 from notesrvc.model.notedoc_parse_state import NoteDocOutlineParseState
 
-from notesrvc.constants import BEGIN_NOTE_PATTERN
+from notesrvc.constants import BEGIN_NOTE_PATTERN, BEGIN_JOURNAL_NOTE_PATTERN, DATE_TIME_FORMAT
 
 
 class NoteDocParser:
@@ -17,6 +18,7 @@ class NoteDocParser:
         pass
 
 
+# TODO: Consider: rename: NoteDocParser
 class NoteDocOutlineParser(NoteDocParser):
 
     def __init__(self):
@@ -33,9 +35,12 @@ class NoteDocOutlineParser(NoteDocParser):
     # TODO: what return type can I use ?
     @staticmethod
     def _start(line: str, parse_state: NoteDocOutlineParseState):
-        match = re.search(BEGIN_NOTE_PATTERN, line)
-        if match:
+        note_match = re.search(BEGIN_NOTE_PATTERN, line)
+        journal_note_match = re.search(BEGIN_JOURNAL_NOTE_PATTERN, line)
+        if note_match:
             return NoteDocOutlineParser._new_note(line, parse_state)
+        elif journal_note_match:
+            return NoteDocOutlineParser._new_journal_note(line, parse_state)
         else:
             return NoteDocOutlineParser._start
 
@@ -54,15 +59,32 @@ class NoteDocOutlineParser(NoteDocParser):
         return NoteDocOutlineParser._summary_text
 
     @staticmethod
+    def _new_journal_note(line: str, parse_state: NoteDocOutlineParseState):
+        if parse_state.note:
+            parse_state.note.body_text = '\n'.join(parse_state.body_text_lines)
+        parse_state.note = JournalNote()
+        parse_state.note.note_id = 'N' + str(parse_state.notedoc.size())
+        print(line[1:-1])
+        date_stamp = datetime.strptime(line[1:-1], DATE_TIME_FORMAT)
+        parse_state.note.date_stamp = date_stamp
+        parse_state.body_text_lines = []
+        parse_state.notedoc.append_note(parse_state.note)
+
+        return NoteDocOutlineParser._summary_text
+
+    @staticmethod
     def _summary_text(line: str, parse_state: NoteDocOutlineParseState):
         parse_state.note.summary_text = line
         return NoteDocOutlineParser._body_text
 
     @staticmethod
     def _body_text(line: str, parse_state: NoteDocOutlineParseState):
-        match = re.search(BEGIN_NOTE_PATTERN, line)
-        if match:
+        note_match = re.search(BEGIN_NOTE_PATTERN, line)
+        journal_note_match = re.search(BEGIN_JOURNAL_NOTE_PATTERN, line)
+        if note_match:
             return NoteDocOutlineParser._new_note(line, parse_state)
+        elif journal_note_match:
+            return NoteDocOutlineParser._new_journal_note(line, parse_state)
         else:
             parse_state.body_text_lines.append(line)
             return NoteDocOutlineParser._body_text
