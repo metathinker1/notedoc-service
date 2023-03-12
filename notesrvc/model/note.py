@@ -18,6 +18,14 @@ class Note:
             note_as_dict['Tags'] = self.render_tag_as_array_of_strings()
         return note_as_dict
 
+    # TODO: Consider: moving to Tag
+    def render_tag_as_array_of_strings(self):
+        try:
+            result = [tag.headline_text for tag in self.tags]
+            return result
+        except Exception as ex:
+            print('stop here')
+            return ''
 
 class JournalNote(Note):
 
