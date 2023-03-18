@@ -19,3 +19,6 @@ class NoteDocument:
 
     def add_note(self, note: Note):
         self.notecoll.add_note(note)
+
+    def render_as_text(self, fields: dict = None):
+        return self.notecoll.render_as_text()

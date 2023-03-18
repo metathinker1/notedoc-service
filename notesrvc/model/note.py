@@ -1,22 +1,46 @@
 
 from datetime import datetime
 
-from notesrvc.constants import DATE_TIME_FORMAT
+from notesrvc.constants import DATE_TIME_FORMAT, DATE_FORMAT
 
 
 class Note:
 
     def __init__(self, note_id: str = None):
         self.note_id = note_id
+        # TODO: Consider moving summary_text to OutlineNote
         self.summary_text = None
         self.body_text = None
         self.tags = []
 
-    def render_as_dict(self):
-        note_as_dict = {"Id": self.note_id, "Summary": self.summary_text, "Body": self.body_text}
-        if len(self.tags) > 0:
+        self.standard_note_fields = ['Id', 'Summary', 'Body']
+        self.default_fields = {'Fields': self.standard_note_fields, 'Tags': ['ALL']}
+        self.search_fields = {'Fields': ['Summary']}
+
+    def render_as_dict(self, fields: dict = None):
+        if not fields:
+            fields = self.default_fields
+
+        note_as_dict = dict()
+
+        # switch to match / case with Python 3.10
+        for field in fields['Fields']:
+            if field == 'Id':
+                note_as_dict['Id'] = self.note_id
+            elif field == 'Summary':
+                note_as_dict['Summary'] = self.summary_text
+            elif field == 'Body':
+                note_as_dict['Body'] = self.body_text
+            else:
+                pass
+
+        # TODO: Add more fine grained selection ability
+        if 'Tags' in fields and len(self.tags) > 0:
             note_as_dict['Tags'] = self.render_tag_as_array_of_strings()
         return note_as_dict
+
+    def render_as_search_dict(self):
+        return self.render_as_dict(fields=self.search_fields)
 
     # TODO: Consider: moving to Tag
     def render_tag_as_array_of_strings(self):
@@ -27,15 +51,44 @@ class Note:
             print('stop here')
             return ''
 
+# TODO: NoteDocOutline requires outline_location -- has to be done in that class
+#   So this base class would never be called ...
+#   OR: OutlineNote where outline_location is only in-memory ??
+
 class JournalNote(Note):
 
     def __init__(self, note_id: str = None, date_stamp: datetime = None):
         super().__init__(note_id)
         self.date_stamp = date_stamp
+        self.date_stamp_str = self.date_stamp.strftime(DATE_TIME_FORMAT)
+        self.date_str = self.date_stamp.strftime(DATE_FORMAT)
 
-    def render_as_dict(self):
-        date_stamp_str = self.date_stamp.strftime(DATE_TIME_FORMAT)
-        note_as_dict = {"DateStamp": date_stamp_str, "Summary": self.summary_text, "Body": self.body_text, "DateStamp": self.date_stamp}
-        if len(self.tags) > 0:
+        self.standard_note_fields = ['Id', 'DateStamp', 'Summary', 'Body']
+        self.default_fields = {'Fields': self.standard_note_fields, 'Tags': ['ALL']}
+        self.search_fields = {'Fields': ['Date', 'Summary']}
+
+    def render_as_dict(self, fields: dict = None):
+        if not fields:
+            fields = self.default_fields
+
+        note_as_dict = dict()
+
+        # switch to match / case with Python 3.10
+        for field in fields['Fields']:
+            if field == 'Id':
+                note_as_dict['Id'] = self.note_id
+            elif field == 'DateStamp':
+                note_as_dict['DateStamp'] = self.date_stamp_str
+            elif field == 'Date':
+                note_as_dict['Date'] = self.date_str
+            elif field == 'Summary':
+                note_as_dict['Summary'] = self.summary_text
+            elif field == 'Body':
+                note_as_dict['Body'] = self.body_text
+            else:
+                pass
+
+        # TODO: Add more fine grained selection ability
+        if 'Tags' in fields and len(self.tags) > 0:
             note_as_dict['Tags'] = self.render_tag_as_array_of_strings()
         return note_as_dict

@@ -63,6 +63,8 @@ if __name__ == '__main__':
     notedoc = notedoc_filerepo.get_notedoc(file_name)
     notedoc_dict = notedoc.render_as_dict()
     print(f'notedoc_dict: {notedoc_dict}')
+    notedoc_search_dict = notedoc.render_as_search_dict()
+    print(f'notedoc_search_dict: {notedoc_search_dict}')
 
     file_name = 'Project.APMGovernanceTool.nwdoc'
     notedoc = notedoc_filerepo.get_notedoc(file_name)

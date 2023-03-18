@@ -20,6 +20,7 @@ END_MULTILINE_TAG = '}\\'
 END_SINGLELINE_TAG = '}'
 
 DATE_TIME_FORMAT = '%Y.%m.%d %H:%M'
+DATE_FORMAT = '%Y.%m.%d'
 
 
 import re

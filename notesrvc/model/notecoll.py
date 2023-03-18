@@ -20,3 +20,6 @@ class NoteCollection:
             return self.notes_dict[note_id]
         else:
             raise KeyError('note_id: {} not in NoteDocument')
+
+    def render_as_text(self):
+        return '\n'.join([note.render_as_text() for note in self.notes])

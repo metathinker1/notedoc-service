@@ -54,11 +54,10 @@ class NoteDocParser:
     def _new_journal_note(line: str, parse_state: NoteDocParseState):
         if parse_state.note:
             parse_state.note.body_text = '\n'.join(parse_state.body_text_lines)
-        parse_state.note = JournalNote()
-        parse_state.note.note_id = 'N' + str(parse_state.notedoc.size())
         print(line[1:-1])
         date_stamp = datetime.strptime(line[1:-1], DATE_TIME_FORMAT)
-        parse_state.note.date_stamp = date_stamp
+        note_id = 'N' + str(parse_state.notedoc.size())
+        parse_state.note = JournalNote(note_id, date_stamp)
         parse_state.body_text_lines = []
         parse_state.tags = []
         parse_state.parse_state = []
@@ -128,6 +127,10 @@ class NoteDocParser:
         text_tag = TextTag()
         text_tag.tag_id = 'T' + str(len(parse_state.note.tags))
         text_tag.headline_text = line[len(BEGIN_TEXT_TAG):]
+        parts = text_tag.headline_text.split(":")
+        if parts and len(parts) > 0:
+            # TODO: validate with TEXT_TAG_TYPES
+            text_tag.text_tag_type = parts[0]
         text_tag.body_text = ''
         return text_tag
 

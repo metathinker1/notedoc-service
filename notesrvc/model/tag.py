@@ -5,3 +5,4 @@ class TextTag:
         self.tag_id = tag_id
         self.headline_text = None
         self.body_text = None
+        self.text_tag_type = None

@@ -2,9 +2,17 @@
 <Note 1>
 Summary 1
 
-{TextTag:Something ...}
+{TextTag:Task: work to do}
 
 {TextTag:Summary:
 the summary
 }\
+
+{TextTag:Outer:
+{TextTag:Inner: inline)
+{TextTag:Inner: multiline:
+blah, blah
+}\
+}\
+
 
