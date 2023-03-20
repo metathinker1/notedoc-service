@@ -1,0 +1,5 @@
+
+curl "http://localhost:5100/notedocsvc/outlinetext?name=NewRelic&type=App&aspect=Reference"
+
+curl "http://localhost:5100/notedocsvc/statusreport"
+curl "http://localhost:5100/notedocsvc/statusreport?days=30"
