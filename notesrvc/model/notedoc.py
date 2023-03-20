@@ -9,7 +9,7 @@ class NoteDocument:
         self.notedoc_id = notedoc_metadata.get('NoteDocId')
         self.entity_type = notedoc_metadata.get('EntityType')
         self.entity_name = notedoc_metadata.get('EntityName')
-        self.aspect = notedoc_metadata.get('EntityAspect')
+        self.entity_aspect = notedoc_metadata.get('EntityAspect')
         # TODO: Research: best practice: field with type, or check instance type; or antipattern because polymorphic
         self.structure = notedoc_metadata.get('NoteDocStructure')
         self.notecoll = NoteCollection(self.notedoc_id)

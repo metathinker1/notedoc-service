@@ -17,6 +17,21 @@ class Note:
         self.default_fields = {'Fields': self.standard_note_fields, 'Tags': ['ALL']}
         self.search_fields = {'Fields': ['Summary']}
 
+    def is_in_date_range(self, begin_date_range: datetime = None, end_date_range: datetime = None) -> bool:
+        # Only JournalNote supports
+        return False
+
+    def get_tags(self, **kwargs):
+        return_tags = list()
+        if 'text_tag_type' in kwargs:
+            tag_type = kwargs['text_tag_type']
+            for tag in self.tags:
+                if tag.is_tag_text_type(tag_type):
+                    return_tags.append(tag)
+            return return_tags
+        else:
+            return self.tags.copy()
+
     def render_as_dict(self, fields: dict = None):
         if not fields:
             fields = self.default_fields
@@ -66,6 +81,19 @@ class JournalNote(Note):
         self.standard_note_fields = ['Id', 'DateStamp', 'Summary', 'Body']
         self.default_fields = {'Fields': self.standard_note_fields, 'Tags': ['ALL']}
         self.search_fields = {'Fields': ['Date', 'Summary']}
+
+    def is_in_date_range(self, begin_date_range: datetime = None, end_date_range: datetime = None) -> bool:
+        if not self.date_stamp:
+            return False
+
+        if begin_date_range and end_date_range:
+            return self.date_stamp >= begin_date_range and self.date_stamp <= end_date_range
+        elif begin_date_range:
+            return self.date_stamp >= begin_date_range
+        elif end_date_range:
+            return self.date_stamp <= end_date_range
+        else:
+            return False
 
     def render_as_dict(self, fields: dict = None):
         if not fields:

@@ -5,11 +5,12 @@ class NoteDocStructure:
     JOURNAL = 'Journal'
 
 
-class NoteDocAspect:
+class EntityAspect:
     REFERENCE = 'Reference'
     TOOLBOX = 'Toolbox'
     WORK_JOURNAL = 'WorkJournal'
     MEETING_JOURNAL = 'MeetingJournal'
+    DESIGN_JOURNAL = 'DesignJournal'
     SUMMARIZER = 'Summarizer'
 
 
@@ -21,6 +22,7 @@ END_SINGLELINE_TAG = '}'
 
 DATE_TIME_FORMAT = '%Y.%m.%d %H:%M'
 DATE_FORMAT = '%Y.%m.%d'
+DATE_DASH_FORMAT = '%Y-%m-%d'
 
 
 import re
