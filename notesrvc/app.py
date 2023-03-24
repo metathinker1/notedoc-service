@@ -58,4 +58,6 @@ if __name__ == '__main__':
     notedoc_filerepo.initialize_active_notedocs()
     notedoc_filerepo.import_active_notedocs()
 
+    # TODO: Use configuration: by include_list or by_file_type ['nwdoc', 'nodoc', ...]
+
     app.run(host='0.0.0.0', debug=False, port=FLASK_PORT_NUMBER)

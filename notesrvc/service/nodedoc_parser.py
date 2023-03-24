@@ -54,7 +54,7 @@ class NoteDocParser:
     def _new_journal_note(line: str, parse_state: NoteDocParseState):
         if parse_state.note:
             parse_state.note.body_text = '\n'.join(parse_state.body_text_lines)
-        print(line[1:-1])
+        # print(line[1:-1])
         date_stamp = datetime.strptime(line[1:-1], DATE_TIME_FORMAT)
         note_id = 'N' + str(parse_state.notedoc.size())
         parse_state.note = JournalNote(note_id, date_stamp)

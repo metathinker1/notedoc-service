@@ -1,4 +1,5 @@
 from datetime import datetime
+import glob
 
 from notesrvc.constants import EntityAspect, NoteDocStructure
 import notesrvc.service.notedoc_factory as notedoc_factory
@@ -7,7 +8,7 @@ from notesrvc.config import Config
 from notesrvc.constants import DATE_DASH_FORMAT
 
 # NOTEDOC_FILE_REPO_PATH = '/Users/robertwood/Google Drive/My Drive/AncNoteDocRepo/_Ancestry'
-
+# NOTEDOC_FILE_REPO_PATH = '/Users/robertwood/Project.ThoughtPal/AncNoteDocRepo'
 
 class NoteDocFileRepo:
 
@@ -18,31 +19,81 @@ class NoteDocFileRepo:
 
         self.search_cache = dict()
 
+        self.supported_notedoc_types = ['nwdoc', 'nodoc']
+
+        self.active_notedoc_filenames = list()
+        self.active_entity_order = dict()
+
     def initialize_active_notedocs(self):
-        self.active_notedoc_filenames = [
-        'Project.RDS_MetricHarvestProcessing.nwdoc',
-        'Design.RDS_MetricHarvestProcessing.nwdoc',
-        'AppLambda.apm-rds-mtrc-harvest-cntr.nwdoc',
-        'Design.apm-rds-mtrc-harvest-cntr.nwdoc',
-        'Project.APM_AlertRouter.nwdoc',
-        'Design.APM_AlertRouter.nwdoc',
-        'AppLambda.apm-alert-router.nwdoc',
-        'Design.apm-alert-router.nwdoc',
-        'AppLambda.apm-hoodpatrol.nwdoc'
+        self.active_notedoc_filenames.extend([
+            'Project.ZabbixMonitoringMigration.nwdoc',
+
+            'Project.APM_AlertRouter.nwdoc',
+            'Design.APM_AlertRouter.nwdoc',
+            'AppLambda.apm-alert-router.nwdoc',
+            'Design.apm-alert-router.nwdoc',
+            'AppDevLib.acom-oasis-api-client.nwdoc',
+
+            'Project.RDS_MetricHarvestProcessing.nwdoc',
+            'Design.RDS_MetricHarvestProcessing.nwdoc',
+            'AppLambda.apm-rds-mtrc-harvest-cntr.nwdoc',
+
+            'App.Oasis',
+            'AppDevLib.acom-oasis-api-client',
+
+            'AppLambda.apm-hoodpatrol.nwdoc',
+
+            'AppDevTool.Terraform.nwdoc'
+        ])
+
+#            'AppLambda.apm-rds-mtrc-harvest.nwdoc',
+#            'Design.apm-rds-mtrc-harvest-cntr.nwdoc',
+#            'Design.apm-rds-mtrc-harvest.nwdoc',
+
+        active_entities = [
+            'Project.ZabbixMonitoringMigration',
+
+            'Project.APM_AlertRouter',
+            'AppLambda.apm-alert-router',
+            'AppDevLib.acom-oasis-api-client',
+
+            'Project.RDS_MetricHarvestProcessing',
+            'AppLambda.apm-rds-mtrc-harvest-cntr',
+            'AppLambda.apm-rds-mtrc-harvest',
+
+            'AppLambda.apm-hoodpatrol',
+
+            'AppDevTool.Terraform'
         ]
+
+        loc = 0
+        for entity in active_entities:
+            self.active_entity_order[entity] = loc
+            loc += 1
 
     def import_active_notedocs(self):
         for file_name in self.active_notedoc_filenames:
             self.get_notedoc(file_name)
 
-    def get_notedoc(self, file_name: str):
+    def import_supported_notedocs(self):
+        for notedoc_type in self.supported_notedoc_types:
+            dir_path = f'{self.config.notedoc_repo_location}/*.{notedoc_type}'
+            for file in glob.glob(dir_path, recursive=False):
+                self.get_notedoc(file, is_full_path=True)
+
+    # TECH_DEBT: replace is_full_path
+    def get_notedoc(self, file_name: str, is_full_path: bool = False):
         if file_name in self.notedoc_repo_cache:
             return self.notedoc_repo_cache.get(file_name)
 
-        file_path = f'{self.config.notedoc_repo_location}/{file_name}'
+        if is_full_path:
+            file_path = file_name
+        else:
+            file_path = f'{self.config.notedoc_repo_location}/{file_name}'
         with open(file_path, 'rt', encoding='utf-8') as file:
             notedoc_text = file.read()
 
+        print(f'Parsing file_name: {file_name}')
         # TODO: Consider: use class instead
         notedoc_metadata = dict()
         notedoc_metadata['NoteDocId'] = file_name
@@ -65,11 +116,15 @@ class NoteDocFileRepo:
 
         return notedoc
 
+    # TODO: Add sort: https://www.w3schools.com/python/ref_list_sort.asp
+    # Entity: entity_type & entity_name: specific ordering; then alphabetical
+    # NoteJournal.date_stamp
     def create_status_report(self, begin_date: datetime):
         search_results = self.search_notes(begin_date=begin_date)
         print(f'search_results: {search_results}')
+        report_data = list()
         report = ''
-        
+
         # TODO: suppress repeat Entity, Journal Date headings in report
         last_notedoc_id = None
         last_date_stamp = None
@@ -78,12 +133,29 @@ class NoteDocFileRepo:
             note = result.get('Note')
             tags = result.get('Tags')
             date_stamp = note.date_str
-            report += f'\n{notedoc.entity_type} {notedoc.entity_name}\n'
-            report += f'\n{date_stamp}\n'
             for tag in tags:
-                report += f'{tag.headline_text}\n'
-            report += f'\n\n'
+                report_entry = {
+                    'Entity': f'{notedoc.entity_type}.{notedoc.entity_name}',
+                    'EntityType': notedoc.entity_type,
+                    'EntityName': notedoc.entity_name,
+                    'EntityAspect': notedoc.entity_aspect,
+                    'DateStamp': date_stamp,
+                    'TagHeadline': tag.headline_text,
+                    'TagBody': tag.body_text
+                }
+                report_data.append(report_entry)
+
+        report_data.sort(key=self.report_sorter)
+        for report_entry in report_data:
+            report += f"\n{report_entry['EntityType']} {report_entry['EntityName']}\n"
+            report += f"\n{report_entry['DateStamp']}\n"
+            report += f"{report_entry['TagHeadline']}\n"
+            report += f"{report_entry['TagBody']}\n"
+            report += f"\n\n"
         return report
+
+    def report_sorter(self, e):
+        return self.active_entity_order.get(e['Entity'])
 
     def search_notes(self, **kwargs):
         for arg in kwargs:
@@ -123,9 +195,10 @@ if __name__ == '__main__':
 
     notedoc_filerepo.initialize_active_notedocs()
     notedoc_filerepo.import_active_notedocs()
+    # notedoc_filerepo.import_supported_notedocs()
 
     report = notedoc_filerepo.create_status_report('2023-02-17')
-    print(f'search_results: {report}')
+    print(f'Status Report:\n{report}')
 
     # file_name = 'Project.APM_AlertRouter.nodoc'
     file_name = 'Project.APMGovernanceTool.nodoc'
