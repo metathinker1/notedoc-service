@@ -55,7 +55,7 @@ def _derive_file_name(entity_name: str, entity_type: str, entity_aspect: str) ->
 if __name__ == '__main__':
     logging.info('Starting Flask')
 
-    notedoc_filerepo.initialize_active_notedocs()
+    notedoc_filerepo.initialize_active_entities()
     notedoc_filerepo.import_active_notedocs()
 
     # TODO: Use configuration: by include_list or by_file_type ['nwdoc', 'nodoc', ...]

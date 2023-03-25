@@ -1,0 +1,16 @@
+{
+  "Project.ZabbixMonitoringMigration": [],
+  "Project.APM_AlertRouter": [
+    "AppLambda.apm-alert-router",
+    "AppDevLib.acom-oasis-api-client"
+  ],
+  "Project.RDS_MetricHarvestProcessing": [
+    "AppLambda.apm-rds-mtrc-harvest-cntr",
+    "AppLambda.apm-rds-mtrc-harvest"
+  ],
+  "App.Oasis": [
+    "AppDevLib.acom-oasis-api-client"
+  ],
+  "AppLambda.apm-hoodpatrol":  [],
+  "AppDevTool.Terraform": []
+}

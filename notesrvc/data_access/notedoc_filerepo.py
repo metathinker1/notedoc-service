@@ -1,5 +1,7 @@
 from datetime import datetime
 import glob
+import json
+import os
 
 from notesrvc.constants import EntityAspect, NoteDocStructure
 import notesrvc.service.notedoc_factory as notedoc_factory
@@ -24,7 +26,33 @@ class NoteDocFileRepo:
         self.active_notedoc_filenames = list()
         self.active_entity_order = dict()
 
-    def initialize_active_notedocs(self):
+    def initialize_active_entities(self):
+        file_name = config.notedoc_active_entities_file
+        with open(file_name, 'r') as active_entities_file:
+            active_entities_json = active_entities_file.read()
+
+        active_entities_dict = json.loads(active_entities_json)
+        loc = 0
+        for grouping_entity, child_entities in active_entities_dict.items():
+            self.active_entity_order[grouping_entity] = loc
+            loc += 1
+            for child_entity in child_entities:
+                self.active_entity_order[child_entity] = loc
+                loc += 1
+
+        self._initialize_active_notedoc_filenames()
+
+    def _initialize_active_notedoc_filenames(self):
+        for entity in self.active_entity_order.keys():
+            file_name = f'{entity}.nwdoc'
+            if os.path.exists(f'{self.config.notedoc_repo_location}/{file_name}'):
+                self.active_notedoc_filenames.append(file_name)
+            entity_name = entity.split('.')[1]
+            file_name = f'Design.{entity_name}.nwdoc'
+            if os.path.exists(f'{self.config.notedoc_repo_location}/{file_name}'):
+                self.active_notedoc_filenames.append(file_name)
+
+    def initialize_active_notedocs_tbd(self):
         self.active_notedoc_filenames.extend([
             'Project.ZabbixMonitoringMigration.nwdoc',
 
@@ -193,7 +221,10 @@ if __name__ == '__main__':
     config = Config()
     notedoc_filerepo = NoteDocFileRepo(config)
 
-    notedoc_filerepo.initialize_active_notedocs()
+    notedoc_filerepo.initialize_active_entities()
+
+    # notedoc_filerepo.initialize_active_notedocs_tbd()
+
     notedoc_filerepo.import_active_notedocs()
     # notedoc_filerepo.import_supported_notedocs()
 
