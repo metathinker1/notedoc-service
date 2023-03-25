@@ -4,7 +4,7 @@ from datetime import datetime, timedelta
 
 from notesrvc.config import Config
 from notesrvc.data_access.notedoc_filerepo import NoteDocFileRepo
-from notesrvc.constants import EntityAspect, DATE_DASH_FORMAT
+from notesrvc.constants import EntityAspect, DATE_DASH_FORMAT, MONTH_DAY_DATE_FORMAT
 
 app = Flask(__name__)
 
@@ -33,12 +33,25 @@ def get_outline_text():
 
 @app.route('/notedocsvc/statusreport', methods=['GET'])
 def get_status_report():
-    num_days_before = int(request.args.get('days'))
-    if not num_days_before:
-        num_days_before = 1
-    begin_date = datetime.now() - timedelta(days=num_days_before)
-    begin_date_str = begin_date.strftime(DATE_DASH_FORMAT)
-    report = notedoc_filerepo.create_status_report(begin_date_str)
+    days = request.args.get('days')
+    begin_month_day_str = request.args.get('begin')
+    end_month_day_str = request.args.get('end')
+    if days:
+        num_days_before = int()
+        begin_date = datetime.now() - timedelta(days=num_days_before)
+        begin_date_str = begin_date.strftime(DATE_DASH_FORMAT)
+    else:
+        if begin_month_day_str:
+            begin_date_str = f'2023-{begin_month_day_str}'
+        else:
+            begin_date = datetime.now() - timedelta(days=1)
+            begin_date_str = begin_date.strftime(DATE_DASH_FORMAT)
+        end_date_str = None
+        if end_month_day_str:
+            end_date_str = f'2023-{end_month_day_str}'
+
+
+    report = notedoc_filerepo.create_status_report(begin_date_str, end_date_str)
     return report
 
 

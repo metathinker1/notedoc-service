@@ -23,7 +23,7 @@ END_SINGLELINE_TAG = '}'
 DATE_TIME_FORMAT = '%Y.%m.%d %H:%M'
 DATE_FORMAT = '%Y.%m.%d'
 DATE_DASH_FORMAT = '%Y-%m-%d'
-
+MONTH_DAY_DATE_FORMAT = '%m-%d'
 
 import re
 

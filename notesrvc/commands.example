@@ -3,3 +3,4 @@ curl "http://localhost:5100/notedocsvc/outlinetext?name=NewRelic&type=App&aspect
 
 curl "http://localhost:5100/notedocsvc/statusreport"
 curl "http://localhost:5100/notedocsvc/statusreport?days=30"
+curl "http://localhost:5100/notedocsvc/statusreport?begin=03-23"

@@ -12,6 +12,8 @@ from notesrvc.constants import DATE_DASH_FORMAT
 # NOTEDOC_FILE_REPO_PATH = '/Users/robertwood/Google Drive/My Drive/AncNoteDocRepo/_Ancestry'
 # NOTEDOC_FILE_REPO_PATH = '/Users/robertwood/Project.ThoughtPal/AncNoteDocRepo'
 
+config = Config()
+
 class NoteDocFileRepo:
 
     def __init__(self, config: Config):
@@ -25,6 +27,7 @@ class NoteDocFileRepo:
 
         self.active_notedoc_filenames = list()
         self.active_entity_order = dict()
+        self.manual_entity_type_map = dict()
 
     def initialize_active_entities(self):
         file_name = config.notedoc_active_entities_file
@@ -32,7 +35,8 @@ class NoteDocFileRepo:
             active_entities_json = active_entities_file.read()
 
         active_entities_dict = json.loads(active_entities_json)
-        loc = 0
+        # ALERT: Don't start with 0, which evaluates to False
+        loc = 1
         for grouping_entity, child_entities in active_entities_dict.items():
             self.active_entity_order[grouping_entity] = loc
             loc += 1
@@ -41,6 +45,16 @@ class NoteDocFileRepo:
                 loc += 1
 
         self._initialize_active_notedoc_filenames()
+
+        self.manual_entity_type_map = {
+            'acom-oasis-api-client': 'AppDevLib',
+            'APM_AlertRouter': 'Project',
+            'apm-alert-router': 'AppLambda',
+            'apm-hoodpatrol': 'AppLambda',
+            'apm-rds-mtrc-harvest': 'App',
+            'apm-rds-mtrc-harvest-cntr': 'AppLambda',
+            'RDS_MetricHarvestProcessing': 'Project',
+        }
 
     def _initialize_active_notedoc_filenames(self):
         for entity in self.active_entity_order.keys():
@@ -127,8 +141,11 @@ class NoteDocFileRepo:
         notedoc_metadata['NoteDocId'] = file_name
         file_name_parts = file_name.split('.')
         # TODO: Consider: Entity class
-        notedoc_metadata['EntityType'] = file_name_parts[0]
         notedoc_metadata['EntityName'] = file_name_parts[1]
+        if file_name_parts[0] in ['Design', 'Toolbox']:
+            notedoc_metadata['EntityType'] = self._manually_map_entity_type(notedoc_metadata['EntityName'])
+        else:
+            notedoc_metadata['EntityType'] = file_name_parts[0]
         notedoc_metadata['EntityAspect'], notedoc_metadata['NoteDocStructure'] = \
             NoteDocFileRepo._derive_aspect_structure(file_name_parts)
 
@@ -147,8 +164,8 @@ class NoteDocFileRepo:
     # TODO: Add sort: https://www.w3schools.com/python/ref_list_sort.asp
     # Entity: entity_type & entity_name: specific ordering; then alphabetical
     # NoteJournal.date_stamp
-    def create_status_report(self, begin_date: datetime):
-        search_results = self.search_notes(begin_date=begin_date)
+    def create_status_report(self, begin_date: str, end_date: str = None):
+        search_results = self.search_notes(begin_date=begin_date, end_date=end_date)
         print(f'search_results: {search_results}')
         report_data = list()
         report = ''
@@ -183,22 +200,35 @@ class NoteDocFileRepo:
         return report
 
     def report_sorter(self, e):
+        if not self.active_entity_order.get(e['Entity']):
+            print('stop here')
         return self.active_entity_order.get(e['Entity'])
 
     def search_notes(self, **kwargs):
-        for arg in kwargs:
-            print(arg)
-        date_str = kwargs.get('begin_date')
-        print(date_str)
-        begin_date = datetime.strptime(date_str, DATE_DASH_FORMAT)
-        print(begin_date)
+        # for arg in kwargs:
+        #     print(arg)
+        begin_date_str = kwargs.get('begin_date')
+        end_date_str = kwargs.get('end_date')
+        # print(begin_date_str)
+        begin_date = datetime.strptime(begin_date_str, DATE_DASH_FORMAT)
+        end_date = None
+        if end_date_str:
+            end_date = datetime.strptime(end_date_str, DATE_DASH_FORMAT)
+        # print(begin_date)
         search_result = []
         for notedoc in self.notedoc_repo_cache.values():
             if notedoc.entity_aspect == EntityAspect.WORK_JOURNAL:
-                match_notes = notedoc.search_notes(begin_date, 'Status')
+                match_notes = notedoc.search_notes(begin_date, end_date, 'Status')
                 if len(match_notes) > 0:
                     search_result.extend(match_notes)
         return search_result
+
+    def _manually_map_entity_type(self, entity_name: str) -> str:
+        entity_type = self.manual_entity_type_map.get(entity_name)
+        if entity_type:
+            return entity_type
+        else:
+            raise Exception(f'No mapping of entity_name: {entity_name} to entity_type')
 
     @staticmethod
     def _derive_aspect_structure(file_name_parts):
