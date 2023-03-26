@@ -58,6 +58,7 @@ class NoteDocFileRepo:
 
     def _initialize_active_notedoc_filenames(self):
         for entity in self.active_entity_order.keys():
+            # For now, explicit rather than self.supported_notedoc_types, because each has special cases
             file_name = f'{entity}.nwdoc'
             if os.path.exists(f'{self.config.notedoc_repo_location}/{file_name}'):
                 self.active_notedoc_filenames.append(file_name)
@@ -66,52 +67,13 @@ class NoteDocFileRepo:
             if os.path.exists(f'{self.config.notedoc_repo_location}/{file_name}'):
                 self.active_notedoc_filenames.append(file_name)
 
-    def initialize_active_notedocs_tbd(self):
-        self.active_notedoc_filenames.extend([
-            'Project.ZabbixMonitoringMigration.nwdoc',
-
-            'Project.APM_AlertRouter.nwdoc',
-            'Design.APM_AlertRouter.nwdoc',
-            'AppLambda.apm-alert-router.nwdoc',
-            'Design.apm-alert-router.nwdoc',
-            'AppDevLib.acom-oasis-api-client.nwdoc',
-
-            'Project.RDS_MetricHarvestProcessing.nwdoc',
-            'Design.RDS_MetricHarvestProcessing.nwdoc',
-            'AppLambda.apm-rds-mtrc-harvest-cntr.nwdoc',
-
-            'App.Oasis',
-            'AppDevLib.acom-oasis-api-client',
-
-            'AppLambda.apm-hoodpatrol.nwdoc',
-
-            'AppDevTool.Terraform.nwdoc'
-        ])
-
-#            'AppLambda.apm-rds-mtrc-harvest.nwdoc',
-#            'Design.apm-rds-mtrc-harvest-cntr.nwdoc',
-#            'Design.apm-rds-mtrc-harvest.nwdoc',
-
-        active_entities = [
-            'Project.ZabbixMonitoringMigration',
-
-            'Project.APM_AlertRouter',
-            'AppLambda.apm-alert-router',
-            'AppDevLib.acom-oasis-api-client',
-
-            'Project.RDS_MetricHarvestProcessing',
-            'AppLambda.apm-rds-mtrc-harvest-cntr',
-            'AppLambda.apm-rds-mtrc-harvest',
-
-            'AppLambda.apm-hoodpatrol',
-
-            'AppDevTool.Terraform'
-        ]
-
-        loc = 0
-        for entity in active_entities:
-            self.active_entity_order[entity] = loc
-            loc += 1
+            file_name = f'{entity}.nodoc'
+            if os.path.exists(f'{self.config.notedoc_repo_location}/{file_name}'):
+                self.active_notedoc_filenames.append(file_name)
+            entity_name = entity.split('.')[1]
+            file_name = f'Toolbox.{entity_name}.nodoc'
+            if os.path.exists(f'{self.config.notedoc_repo_location}/{file_name}'):
+                self.active_notedoc_filenames.append(file_name)
 
     def import_active_notedocs(self):
         for file_name in self.active_notedoc_filenames:
