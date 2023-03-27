@@ -1,6 +1,7 @@
 from flask import Flask, request
 import logging
 from datetime import datetime, timedelta
+import json
 
 from notesrvc.config import Config
 from notesrvc.data_access.notedoc_filerepo import NoteDocFileRepo
@@ -53,6 +54,17 @@ def get_status_report():
 
     report = notedoc_filerepo.create_status_report(begin_date_str, end_date_str)
     return report
+
+
+@app.route('/notedocsvc/search', methods=['POST'])
+def handle_tool_search():
+    search_dict = json.loads(request.data)
+    if search_dict.get('aspect') == EntityAspect.TOOLBOX:
+        # search_result = notedoc_filerepo.search_for_tool(search_term=search_dict.get('search_term'))
+        search_report = notedoc_filerepo.create_tool_search_report(search_dict)
+        return search_report
+    else:
+        return f"aspect: {search_dict.get('aspect')} not yet supported"
 
 
 def _derive_file_name(entity_name: str, entity_type: str, entity_aspect: str) -> str:

@@ -53,7 +53,10 @@ class NoteDocFileRepo:
             'apm-hoodpatrol': 'AppLambda',
             'apm-rds-mtrc-harvest': 'App',
             'apm-rds-mtrc-harvest-cntr': 'AppLambda',
+            'NewRelic': 'App',
+            'Oasis': 'App',
             'RDS_MetricHarvestProcessing': 'Project',
+            'Terraform': 'AppDevTool',
         }
 
     def _initialize_active_notedoc_filenames(self):
@@ -72,8 +75,9 @@ class NoteDocFileRepo:
                 self.active_notedoc_filenames.append(file_name)
             entity_name = entity.split('.')[1]
             file_name = f'Toolbox.{entity_name}.nodoc'
-            if os.path.exists(f'{self.config.notedoc_repo_location}/{file_name}'):
+            if os.path.exists(f"{self.config.notedoc_repo_location}/{file_name}"):
                 self.active_notedoc_filenames.append(file_name)
+
 
     def import_active_notedocs(self):
         for file_name in self.active_notedoc_filenames:
@@ -126,8 +130,8 @@ class NoteDocFileRepo:
     # TODO: Add sort: https://www.w3schools.com/python/ref_list_sort.asp
     # Entity: entity_type & entity_name: specific ordering; then alphabetical
     # NoteJournal.date_stamp
-    def create_status_report(self, begin_date: str, end_date: str = None):
-        search_results = self.search_notes(begin_date=begin_date, end_date=end_date)
+    def create_status_report(self, begin_date: str, end_date: str = None) -> str:
+        search_results = self.search_journal_notes(begin_date=begin_date, end_date=end_date)
         print(f'search_results: {search_results}')
         report_data = list()
         report = ''
@@ -161,12 +165,25 @@ class NoteDocFileRepo:
             report += f"\n\n"
         return report
 
+    def create_tool_search_report(self, search_dict: dict) -> str:
+        search_results = self.search_for_tool(search_term=search_dict.get('search_term'))
+        report_data = list()
+        report = ''
+        for result in search_results:
+            notedoc = result.get('NoteDoc')
+            note = result.get('Note')
+            tags = result.get('Tags')
+            report += f'{notedoc.entity_type}.{notedoc.entity_name}\n'
+            report += f'{note.summary_text}\n'
+            report += f'{note.body_text}\n'
+        return report
+
     def report_sorter(self, e):
         if not self.active_entity_order.get(e['Entity']):
             print('stop here')
         return self.active_entity_order.get(e['Entity'])
 
-    def search_notes(self, **kwargs):
+    def search_journal_notes(self, **kwargs):
         # for arg in kwargs:
         #     print(arg)
         begin_date_str = kwargs.get('begin_date')
@@ -179,11 +196,25 @@ class NoteDocFileRepo:
         # print(begin_date)
         search_result = []
         for notedoc in self.notedoc_repo_cache.values():
-            if notedoc.entity_aspect == EntityAspect.WORK_JOURNAL:
-                match_notes = notedoc.search_notes(begin_date, end_date, 'Status')
+            if notedoc.structure == NoteDocStructure.JOURNAL:
+                match_notes = notedoc.search_notes_text_tag(begin_date, end_date, 'Status')
                 if len(match_notes) > 0:
                     search_result.extend(match_notes)
         return search_result
+
+    def search_for_tool(self, **kwargs):
+        search_term = kwargs.get('search_term')
+        # Always case insensitive for now
+        search_term = search_term.lower()
+
+        search_result = list()
+        for notedoc in self.notedoc_repo_cache.values():
+            if notedoc.entity_aspect == EntityAspect.TOOLBOX:
+                match_notes = notedoc.search_notes(search_term)
+                if len(match_notes) > 0:
+                    search_result.extend(match_notes)
+        return search_result
+
 
     def _manually_map_entity_type(self, entity_name: str) -> str:
         entity_type = self.manual_entity_type_map.get(entity_name)

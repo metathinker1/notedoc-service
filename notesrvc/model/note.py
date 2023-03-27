@@ -9,8 +9,8 @@ class Note:
     def __init__(self, note_id: str = None):
         self.note_id = note_id
         # TODO: Consider moving summary_text to OutlineNote
-        self.summary_text = None
-        self.body_text = None
+        self.summary_text = ''
+        self.body_text = ''
         self.tags = []
 
         self.standard_note_fields = ['Id', 'Summary', 'Body']

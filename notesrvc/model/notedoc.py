@@ -20,5 +20,15 @@ class NoteDocument:
     def add_note(self, note: Note):
         self.notecoll.add_note(note)
 
+    def search_notes(self, search_term: str) -> list:
+        match_notes = list()
+        # Always case insensitive for now
+        for note in self.notecoll.notes:
+            if self.notedoc_id == 'Toolbox.NewRelic.nodoc':
+                print('stop here')
+            if search_term in note.summary_text.lower() or search_term in note.body_text.lower():
+                match_notes.append({'NoteDoc': self, 'Note': note, 'Tags': []})
+        return match_notes
+
     def render_as_text(self, fields: dict = None):
         return self.notecoll.render_as_text()
