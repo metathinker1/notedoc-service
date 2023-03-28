@@ -38,9 +38,10 @@ def get_status_report():
     begin_month_day_str = request.args.get('begin')
     end_month_day_str = request.args.get('end')
     if days:
-        num_days_before = int()
+        num_days_before = int(days)
         begin_date = datetime.now() - timedelta(days=num_days_before)
         begin_date_str = begin_date.strftime(DATE_DASH_FORMAT)
+        end_date_str = None
     else:
         if begin_month_day_str:
             begin_date_str = f'2023-{begin_month_day_str}'
