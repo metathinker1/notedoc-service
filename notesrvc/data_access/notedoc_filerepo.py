@@ -66,10 +66,10 @@ class NoteDocFileRepo:
             file_name = f'{entity}.nwdoc'
             if os.path.exists(f'{self.config.notedoc_repo_location}/{file_name}'):
                 self.active_notedoc_filenames.append(file_name)
-            entity_name = entity.split('.')[1]
-            file_name = f'Design.{entity_name}.nwdoc'
-            if os.path.exists(f'{self.config.notedoc_repo_location}/{file_name}'):
-                self.active_notedoc_filenames.append(file_name)
+            # entity_name = entity.split('.')[1]
+            # file_name = f'Design.{entity_name}.nwdoc'
+            # if os.path.exists(f'{self.config.notedoc_repo_location}/{file_name}'):
+            #     self.active_notedoc_filenames.append(file_name)
 
             file_name = f'{entity}.nodoc'
             if os.path.exists(f'{self.config.notedoc_repo_location}/{file_name}'):
