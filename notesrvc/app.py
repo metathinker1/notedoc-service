@@ -70,7 +70,7 @@ def handle_tool_search():
 
 def _derive_file_name(entity_name: str, entity_type: str, entity_aspect: str) -> str:
     if entity_aspect == EntityAspect.TOOLBOX:
-        return f'Toolbox.{entity_name}.nodoc'
+        return f'{entity_type}.{entity_name}.ntlbox'
     elif entity_aspect == EntityAspect.REFERENCE:
         return f'{entity_type}.{entity_name}.nodoc'
     else:
@@ -83,6 +83,7 @@ if __name__ == '__main__':
 
     notedoc_filerepo.initialize_active_entities()
     notedoc_filerepo.import_active_notedocs()
+    notedoc_filerepo.import_default_supported_notedocs()
 
     # TODO: Use configuration: by include_list or by_file_type ['nwdoc', 'nodoc', ...]
 

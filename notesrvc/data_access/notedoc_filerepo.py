@@ -24,10 +24,11 @@ class NoteDocFileRepo:
         self.search_cache = dict()
 
         self.supported_notedoc_types = ['nwdoc', 'nodoc']
+        self.default_import_notedoc_types = ['ntlbox']
 
         self.active_notedoc_filenames = list()
         self.active_entity_order = dict()
-        self.manual_entity_type_map = dict()
+        # self.manual_entity_type_map = dict()
 
     def initialize_active_entities(self):
         file_name = config.notedoc_active_entities_file
@@ -46,18 +47,18 @@ class NoteDocFileRepo:
 
         self._initialize_active_notedoc_filenames()
 
-        self.manual_entity_type_map = {
-            'acom-oasis-api-client': 'AppDevLib',
-            'APM_AlertRouter': 'Project',
-            'apm-alert-router': 'AppLambda',
-            'apm-hoodpatrol': 'AppLambda',
-            'apm-rds-mtrc-harvest': 'App',
-            'apm-rds-mtrc-harvest-cntr': 'AppLambda',
-            'NewRelic': 'App',
-            'Oasis': 'App',
-            'RDS_MetricHarvestProcessing': 'Project',
-            'Terraform': 'AppDevTool',
-        }
+        # self.manual_entity_type_map = {
+        #     'acom-oasis-api-client': 'AppDevLib',
+        #     'APM_AlertRouter': 'Project',
+        #     'apm-alert-router': 'AppLambda',
+        #     'apm-hoodpatrol': 'AppLambda',
+        #     'apm-rds-mtrc-harvest': 'App',
+        #     'apm-rds-mtrc-harvest-cntr': 'AppLambda',
+        #     'NewRelic': 'App',
+        #     'Oasis': 'App',
+        #     'RDS_MetricHarvestProcessing': 'Project',
+        #     'Terraform': 'AppDevTool',
+        # }
 
     def _initialize_active_notedoc_filenames(self):
         for entity in self.active_entity_order.keys():
@@ -78,7 +79,6 @@ class NoteDocFileRepo:
             if os.path.exists(f"{self.config.notedoc_repo_location}/{file_name}"):
                 self.active_notedoc_filenames.append(file_name)
 
-
     def import_active_notedocs(self):
         for file_name in self.active_notedoc_filenames:
             self.get_notedoc(file_name)
@@ -88,6 +88,14 @@ class NoteDocFileRepo:
             dir_path = f'{self.config.notedoc_repo_location}/*.{notedoc_type}'
             for file in glob.glob(dir_path, recursive=False):
                 self.get_notedoc(file, is_full_path=True)
+
+    def import_default_supported_notedocs(self):
+        for notedoc_type in self.default_import_notedoc_types:
+            dir_path = f'{self.config.notedoc_repo_location}/*.{notedoc_type}'
+            for file in glob.glob(dir_path, recursive=False):
+                file_path_parts = file.split('/')
+                file_name = file_path_parts[-1]
+                self.get_notedoc(file_name, is_full_path=False)
 
     # TECH_DEBT: replace is_full_path
     def get_notedoc(self, file_name: str, is_full_path: bool = False):
@@ -108,10 +116,11 @@ class NoteDocFileRepo:
         file_name_parts = file_name.split('.')
         # TODO: Consider: Entity class
         notedoc_metadata['EntityName'] = file_name_parts[1]
-        if file_name_parts[0] in ['Design', 'Toolbox']:
-            notedoc_metadata['EntityType'] = self._manually_map_entity_type(notedoc_metadata['EntityName'])
-        else:
-            notedoc_metadata['EntityType'] = file_name_parts[0]
+        # if file_name_parts[0] in ['Design', 'Toolbox']:
+        #     notedoc_metadata['EntityType'] = self._manually_map_entity_type(notedoc_metadata['EntityName'])
+        # else:
+        #     notedoc_metadata['EntityType'] = file_name_parts[0]
+        notedoc_metadata['EntityType'] = file_name_parts[0]
         notedoc_metadata['EntityAspect'], notedoc_metadata['NoteDocStructure'] = \
             NoteDocFileRepo._derive_aspect_structure(file_name_parts)
 
@@ -215,21 +224,19 @@ class NoteDocFileRepo:
                     search_result.extend(match_notes)
         return search_result
 
-
-    def _manually_map_entity_type(self, entity_name: str) -> str:
-        entity_type = self.manual_entity_type_map.get(entity_name)
-        if entity_type:
-            return entity_type
-        else:
-            raise Exception(f'No mapping of entity_name: {entity_name} to entity_type')
+    # def _manually_map_entity_type(self, entity_name: str) -> str:
+    #     entity_type = self.manual_entity_type_map.get(entity_name)
+    #     if entity_type:
+    #         return entity_type
+    #     else:
+    #         raise Exception(f'No mapping of entity_name: {entity_name} to entity_type')
 
     @staticmethod
     def _derive_aspect_structure(file_name_parts):
         if file_name_parts[2] == 'nodoc':
-            if file_name_parts[0] == 'Toolbox':
-                return EntityAspect.TOOLBOX, NoteDocStructure.OUTLINE
-            else:
-                return EntityAspect.REFERENCE, NoteDocStructure.OUTLINE
+            return EntityAspect.REFERENCE, NoteDocStructure.OUTLINE
+        elif file_name_parts[2] == 'ntlbox':
+            return EntityAspect.TOOLBOX, NoteDocStructure.OUTLINE
         elif file_name_parts[2] == 'nwdoc':
             return EntityAspect.WORK_JOURNAL, NoteDocStructure.JOURNAL
         elif file_name_parts[2] == 'njdoc':
