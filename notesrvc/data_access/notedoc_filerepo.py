@@ -23,7 +23,7 @@ class NoteDocFileRepo:
 
         self.search_cache = dict()
 
-        self.supported_notedoc_types = ['nwdoc', 'nodoc']
+        self.supported_notedoc_types = ['nwdoc', 'nodoc', 'ndsdoc']
         self.default_import_notedoc_types = ['ntlbox']
 
         self.active_notedoc_filenames = list()
@@ -70,14 +70,19 @@ class NoteDocFileRepo:
             # file_name = f'Design.{entity_name}.nwdoc'
             # if os.path.exists(f'{self.config.notedoc_repo_location}/{file_name}'):
             #     self.active_notedoc_filenames.append(file_name)
+            file_name = f'{entity}.ndsdoc'
+            if os.path.exists(f'{self.config.notedoc_repo_location}/{file_name}'):
+                self.active_notedoc_filenames.append(file_name)
 
             file_name = f'{entity}.nodoc'
             if os.path.exists(f'{self.config.notedoc_repo_location}/{file_name}'):
                 self.active_notedoc_filenames.append(file_name)
-            entity_name = entity.split('.')[1]
-            file_name = f'Toolbox.{entity_name}.nodoc'
-            if os.path.exists(f"{self.config.notedoc_repo_location}/{file_name}"):
-                self.active_notedoc_filenames.append(file_name)
+            # ALERT: No need for .ntlbox as long as all are read
+
+            # entity_name = entity.split('.')[1]
+            # file_name = f'Toolbox.{entity_name}.nodoc'
+            # if os.path.exists(f"{self.config.notedoc_repo_location}/{file_name}"):
+            #     self.active_notedoc_filenames.append(file_name)
 
     def import_active_notedocs(self):
         for file_name in self.active_notedoc_filenames:
@@ -239,6 +244,8 @@ class NoteDocFileRepo:
             return EntityAspect.TOOLBOX, NoteDocStructure.OUTLINE
         elif file_name_parts[2] == 'nwdoc':
             return EntityAspect.WORK_JOURNAL, NoteDocStructure.JOURNAL
+        elif file_name_parts[2] == 'ndsdoc':
+            return EntityAspect.DESIGN_JOURNAL, NoteDocStructure.JOURNAL
         elif file_name_parts[2] == 'njdoc':
             return EntityAspect.MEETING_JOURNAL, NoteDocStructure.JOURNAL
         elif file_name_parts[2] == 'nzdoc':
