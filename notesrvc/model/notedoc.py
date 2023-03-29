@@ -24,9 +24,12 @@ class NoteDocument:
         match_notes = list()
         # Always case insensitive for now
         for note in self.notecoll.notes:
-            if self.notedoc_id == 'Toolbox.NewRelic.nodoc':
-                print('stop here')
-            if search_term in note.summary_text.lower() or search_term in note.body_text.lower():
+            search_term_parts = search_term.split('|')
+            num_match = 0
+            for search_term_part in search_term_parts:
+                if search_term_part in note.summary_text.lower() or search_term in note.body_text.lower():
+                    num_match += 1
+            if num_match == len(search_term_parts):
                 match_notes.append({'NoteDoc': self, 'Note': note, 'Tags': []})
         return match_notes
 
