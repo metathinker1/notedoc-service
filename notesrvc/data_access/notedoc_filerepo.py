@@ -7,6 +7,8 @@ from notesrvc.constants import EntityAspect, NoteDocStructure
 import notesrvc.service.notedoc_factory as notedoc_factory
 from notesrvc.service.nodedoc_parser import NoteDocParser
 from notesrvc.config import Config
+from notesrvc.data_access.person_repo import PersonRepo
+from notesrvc.data_access.workitem_filerepo import WorkItemFileRepo
 from notesrvc.constants import DATE_DASH_FORMAT
 
 # NOTEDOC_FILE_REPO_PATH = '/Users/robertwood/Google Drive/My Drive/AncNoteDocRepo/_Ancestry'
@@ -14,12 +16,14 @@ from notesrvc.constants import DATE_DASH_FORMAT
 
 config = Config()
 
+
 class NoteDocFileRepo:
 
-    def __init__(self, config: Config):
+    def __init__(self, config: Config, person_repo: PersonRepo, workitem_repo: WorkItemFileRepo):
         self.config = config
         self.notedoc_repo_cache = dict()
-        self.notedoc_parser = NoteDocParser()
+
+        self.notedoc_parser = NoteDocParser(person_repo, workitem_repo)
 
         self.search_cache = dict()
 

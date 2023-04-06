@@ -5,6 +5,8 @@ import json
 
 from notesrvc.config import Config
 from notesrvc.data_access.notedoc_filerepo import NoteDocFileRepo
+from notesrvc.data_access.person_repo import PersonRepo
+from notesrvc.data_access.workitem_filerepo import WorkItemFileRepo
 from notesrvc.constants import EntityAspect, DATE_DASH_FORMAT, MONTH_DAY_DATE_FORMAT
 
 app = Flask(__name__)
@@ -12,7 +14,9 @@ app = Flask(__name__)
 FLASK_PORT_NUMBER = 5100
 
 config = Config()
-notedoc_filerepo = NoteDocFileRepo(config)
+person_repo = PersonRepo(config)
+workitem_filerepo = WorkItemFileRepo(config)
+notedoc_filerepo = NoteDocFileRepo(config, person_repo, workitem_filerepo)
 
 
 @app.route('/notedocsvc/ping', methods=['GET'])
@@ -82,6 +86,7 @@ if __name__ == '__main__':
     logging.info('Starting Flask')
 
     notedoc_filerepo.initialize_active_entities()
+    person_repo.import_person_repo()
     notedoc_filerepo.import_active_notedocs()
     notedoc_filerepo.import_default_supported_notedocs()
 

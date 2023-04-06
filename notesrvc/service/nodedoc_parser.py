@@ -1,22 +1,30 @@
 import re
 from datetime import datetime
 
+from notesrvc.model.entity import Entity
+from notesrvc.model.person import Person
 from notesrvc.model.notedoc import NoteDocument
 from notesrvc.model.note import Note, JournalNote
+from notesrvc.model.workitem import WorkItem, WorkItemState
 from notesrvc.model.notedoc_parse_state import NoteDocParseState
 from notesrvc.model.tag import TextTag
-
+from notesrvc.config import Config
+from notesrvc.data_access.person_repo import PersonRepo
+from notesrvc.data_access.workitem_filerepo import WorkItemFileRepo
 from notesrvc.constants import BEGIN_NOTE_PATTERN, BEGIN_JOURNAL_NOTE_PATTERN, BEGIN_TEXT_TAG, END_MULTILINE_TAG, \
-    END_SINGLELINE_TAG, DATE_TIME_FORMAT
+    END_SINGLELINE_TAG, DATE_TIME_FORMAT, BEGIN_WORKITEMS_SECTION, END_WORKITEMS_SECTION, BEGIN_WORKITEM
+
+config = Config()
 
 
 class NoteDocParser:
 
-    def __init__(self):
-        pass
+    def __init__(self, person_repo: PersonRepo, workitem_repo: WorkItemFileRepo):
+        self.person_repo = person_repo
+        self.workitem_repo = workitem_repo
 
     def parse_text(self, raw_text: str, notedoc: NoteDocument):
-        parse_state = NoteDocParseState(notedoc)
+        parse_state = NoteDocParseState(notedoc, self.workitem_repo, self.person_repo)
         parse = NoteDocParser._start
         lines = raw_text.split('\n')
         for line in lines:
@@ -55,16 +63,20 @@ class NoteDocParser:
         if parse_state.note:
             parse_state.note.body_text = '\n'.join(parse_state.body_text_lines)
         # print(line[1:-1])
-        date_stamp = datetime.strptime(line[1:-1], DATE_TIME_FORMAT)
-        note_id = 'N' + str(parse_state.notedoc.size())
-        parse_state.note = JournalNote(note_id, date_stamp)
-        parse_state.body_text_lines = []
-        parse_state.tags = []
-        parse_state.parse_state = []
+        try:
+            date_stamp = datetime.strptime(line.strip()[1:-1], DATE_TIME_FORMAT)
+            note_id = 'N' + str(parse_state.notedoc.size())
+            parse_state.note = JournalNote(note_id, date_stamp)
+            parse_state.body_text_lines = []
+            parse_state.tags = []
+            parse_state.parse_state = []
 
-        parse_state.notedoc.append_note(parse_state.note)
+            parse_state.notedoc.append_note(parse_state.note)
 
-        return NoteDocParser._summary_text
+            return NoteDocParser._summary_text
+        except Exception as ex:
+            print(f'ERROR: {ex}')
+            raise ex
 
     @staticmethod
     def _summary_text(line: str, parse_state: NoteDocParseState):
@@ -76,12 +88,16 @@ class NoteDocParser:
         note_match = re.search(BEGIN_NOTE_PATTERN, line)
         journal_note_match = re.search(BEGIN_JOURNAL_NOTE_PATTERN, line)
         text_tag_match = re.search(BEGIN_TEXT_TAG, line)
+        workitems_match = re.search(BEGIN_WORKITEMS_SECTION, line)
         if note_match:
             return NoteDocParser._new_note(line, parse_state)
         elif journal_note_match:
             return NoteDocParser._new_journal_note(line, parse_state)
         elif text_tag_match:
             return NoteDocParser._new_text_tag(line, parse_state)
+        elif workitems_match:
+            return NoteDocParser._workitems_section
+
         else:
             parse_state.body_text_lines.append(line)
             return NoteDocParser._body_text
@@ -102,6 +118,72 @@ class NoteDocParser:
             parse_state.tags.append(text_tag)
             parse_state.current_tag = parse_state.tags[len(parse_state.tags)-1]
             return NoteDocParser._tag_body_text
+
+    @staticmethod
+    def _workitems_section(line: str, parse_state: NoteDocParseState):
+        # TODO: Implement
+        # Create WorkItem; Populate WorkItem; Return to _body_text
+        workitem_match = re.search(BEGIN_WORKITEM, line)
+        if workitem_match:
+            return NoteDocParser._new_workitem(line, parse_state)
+        elif line == END_WORKITEMS_SECTION:
+            # TODO: set text on current workitem
+            return NoteDocParser._body_text
+        elif line.strip().startswith('{') and line.strip().endswith('}'):
+            return NoteDocParser._workitem_attributes(line, parse_state)
+        else:
+            if parse_state.workitem:
+                parse_state.workitem_body_text_lines.append(line)
+            return NoteDocParser._workitems_section
+
+    @staticmethod
+    def _new_workitem(line: str, parse_state: NoteDocParseState):
+        if parse_state.workitem:
+            parse_state.workitem.body_text = '\n'.join(parse_state.workitem_body_text_lines)
+
+        line_part = line[:line.find(' ')]
+        state = NoteDocParser._derive_workitem_state(line_part)
+        line_part = line[line.find(' '):]
+        line_parts = line_part.split(':')
+        if len(line_parts) > 1:
+            person = parse_state.person_repo.get_person(line_parts[0].strip())
+            summary = line_parts[1]
+        else:
+            person = parse_state.default_person  # TODO: hard code for now: "Rob Wood"
+            summary = line_part
+        entity = Entity(parse_state.notedoc.entity_type, parse_state.notedoc.entity_name)
+        parse_state.workitem = WorkItem(entity, person)
+        parse_state.workitem.state = state
+        parse_state.workitem.summary_text = summary
+        parse_state.workitem_body_text_lines = []
+
+        parse_state.workitem_repo.add_workitem(parse_state.workitem)
+
+        return NoteDocParser._workitems_section
+
+    @staticmethod
+    def _derive_workitem_state(status_text):
+        if len(status_text) == 2:
+            return WorkItemState.derive_from_abbreviation('')
+        else:
+            return WorkItemState.derive_from_abbreviation(status_text[-1])
+
+    @staticmethod
+    def _workitem_attributes(line: str, parse_state: NoteDocParseState):
+        # parse_state.workitem.summary_text = line
+        attributes = line.strip()[1:-1].split('|')
+        for attribute in attributes:
+            if '=' in attribute:
+                name_value = attribute.strip().split('=')
+                if name_value[0].strip() == 'Date':
+                    parse_state.workitem.set_date_defined_str(name_value[1].strip())
+                else:
+                    name = name_value[0].strip()
+                    value = name_value[1].strip()
+                    d = {name: value}  # No idea why Python crashes if don't use d
+                    parse_state.workitem.attributes.append(d)
+        return NoteDocParser._workitems_section
+
     @staticmethod
     def _tag_body_text(line: str, parse_state: NoteDocParseState):
         text_tag_match = re.search(BEGIN_TEXT_TAG, line)
