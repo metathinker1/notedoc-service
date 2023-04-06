@@ -177,6 +177,8 @@ class NoteDocParser:
                 name_value = attribute.strip().split('=')
                 if name_value[0].strip() == 'Date':
                     parse_state.workitem.set_date_defined_str(name_value[1].strip())
+                elif name_value[0].strip() == 'DoneDate':
+                    parse_state.workitem.set_date_done_str(name_value[1].strip())
                 else:
                     name = name_value[0].strip()
                     value = name_value[1].strip()

@@ -19,6 +19,8 @@ class WorkItem:
             self.date_defined_str = self.date_defined.strftime(DATE_FORMAT)
         else:
             self.date_defined = None
+        self.date_done = None
+        self.date_done_str = None
 
         self.tags = list()
         self.attributes = list()
@@ -27,6 +29,11 @@ class WorkItem:
     def set_date_defined_str(self, date_defined_str: str):
         self.date_defined_str = date_defined_str
         self.date_defined = datetime.strptime(self.date_defined_str, DATE_FORMAT)
+
+    def set_date_done_str(self, date_done_str: str):
+        self.date_done_str = date_done_str
+        self.date_done = datetime.strptime(self.date_done_str, DATE_FORMAT)
+
 
 class WorkItemState:
     IDEATION = 'Ideation'
@@ -53,3 +60,6 @@ class WorkItemState:
             return WorkItemState.DONE
         else:
             return WorkItemState.DEFINED
+
+
+ACTIVE_WORKITEM_STATES = [WorkItemState.DONE, WorkItemState.IN_PROGRESS]
