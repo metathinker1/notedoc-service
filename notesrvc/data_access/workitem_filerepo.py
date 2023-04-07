@@ -22,9 +22,13 @@ class WorkItemFileRepo:
                 active_workitems.append(workitem)
         return active_workitems
 
-    def get_done_workitems(self, earliest_done_date: datetime):
+    def get_done_workitems(self, earliest_done_date: datetime, latest_done_date: datetime = None):
         done_workitems = list()
         for workitem in self.workitem_repo_cache:
             if workitem.state == WorkItemState.DONE and workitem.done_date >= earliest_done_date:
-                done_workitems.append(workitem)
+                if latest_done_date:
+                    if workitem.done_date <= latest_done_date:
+                        done_workitems.append(workitem)
+                else:
+                    done_workitems.append(workitem)
         return done_workitems

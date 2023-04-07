@@ -22,6 +22,7 @@ class NoteDocFileRepo:
     def __init__(self, config: Config, person_repo: PersonRepo, workitem_repo: WorkItemFileRepo):
         self.config = config
         self.notedoc_repo_cache = dict()
+        self.workitem_repo = workitem_repo
 
         self.notedoc_parser = NoteDocParser(person_repo, workitem_repo)
 
@@ -150,6 +151,10 @@ class NoteDocFileRepo:
     # NoteJournal.date_stamp
     def create_status_report(self, begin_date: str, end_date: str = None) -> str:
         search_results = self.search_journal_notes(begin_date=begin_date, end_date=end_date)
+
+        active_workitems = self.workitem_repo.get_active_workitems()
+        recent_done_workitems = self.workitem_repo.get_done_workitems(begin_date, end_date)
+
         print(f'search_results: {search_results}')
         report_data = list()
         report = ''
