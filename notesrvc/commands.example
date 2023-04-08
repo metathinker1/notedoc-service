@@ -9,6 +9,8 @@ curl "http://localhost:5100/notedocsvc/statusreport?days=30"
 curl "http://localhost:5100/notedocsvc/statusreport?begin=03-23"
 curl "http://localhost:5100/notedocsvc/statusreport?begin=03-23&end=03-25"
 
+curl "http://localhost:5100/notedocsvc/statusreport?days=8&format=html"
+
 
 curl "http://localhost:5100/notedocsvc/search" -X POST -H "Content-Type:application/json" -d '{"aspect": "Toolbox", "search_term": "Enable Lambda logging"}'
 

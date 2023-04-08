@@ -30,22 +30,22 @@ def get_outline_text():
     entity_name = request.args.get('name')
     entity_type = request.args.get('type')
     entity_aspect = request.args.get('aspect')
-    format = request.args.get('format')
-    if not format:
-        format = 'Text'
+    response_format = request.args.get('format')
+    if not response_format:
+        response_format = 'Text'
     # TODO: Add assertion on entity_aspect: only outline types
     # file_name = _derive_file_name(entity_name, entity_type, entity_aspect)
     # notedoc = notedoc_filerepo.get_notedoc(file_name)
     entity = Entity(entity_type, entity_name)
     notedoc = notedoc_filerepo.get_notedoc_entity(entity, EntityAspect.map_from(entity_aspect))
-    if format == 'text':
+    if response_format == 'text':
         outline_text = notedoc.render_as_outline_text()
         return outline_text
-    elif format == 'html':
+    elif response_format == 'html':
         html_snippet = notedoc.render_as_html_snippet()
         return html_snippet
     else:
-        return f"Unsupport format: {format}"
+        return f"Unsupport format: {response_format}"
 
 
 @app.route('/notedocsvc/statusreport', methods=['GET'])
@@ -53,6 +53,10 @@ def get_status_report():
     days = request.args.get('days')
     begin_month_day_str = request.args.get('begin')
     end_month_day_str = request.args.get('end')
+    response_format = request.args.get('format')
+    if not response_format:
+        response_format = 'text'
+
     if days:
         num_days_before = int(days)
         begin_date = datetime.now() - timedelta(days=num_days_before)
@@ -60,16 +64,21 @@ def get_status_report():
         end_date_str = None
     else:
         if begin_month_day_str:
-            begin_date_str = f'2023-{begin_month_day_str}'
+            if len(end_month_day_str) == 5:
+                begin_date_str = f'2023-{begin_month_day_str}'
+            else:
+                begin_date_str = begin_month_day_str
         else:
             begin_date = datetime.now() - timedelta(days=1)
             begin_date_str = begin_date.strftime(DATE_DASH_FORMAT)
         end_date_str = None
         if end_month_day_str:
-            end_date_str = f'2023-{end_month_day_str}'
+            if len(end_month_day_str) == 5:
+                end_date_str = f'2023-{end_month_day_str}'
+            else:
+                end_date_str = end_month_day_str
 
-
-    report = notedoc_filerepo.create_status_report(begin_date_str, end_date_str)
+    report = notedoc_filerepo.create_status_report(begin_date_str, end_date_str, response_format)
     return report
 
 

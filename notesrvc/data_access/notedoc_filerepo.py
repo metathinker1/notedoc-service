@@ -154,15 +154,18 @@ class NoteDocFileRepo:
     # TODO: Add sort: https://www.w3schools.com/python/ref_list_sort.asp
     # Entity: entity_type & entity_name: specific ordering; then alphabetical
     # NoteJournal.date_stamp
-    def create_status_report(self, begin_date: str, end_date: str = None) -> str:
-        search_results = self.search_journal_notes(begin_date=begin_date, end_date=end_date)
-
+    def create_status_report(self, begin_date_str: str, end_date_str: str = None, response_format: str = 'text') -> str:
+        search_results = self.search_journal_notes(begin_date=begin_date_str, end_date=end_date_str)
+        begin_date = datetime.strptime(begin_date_str, DATE_DASH_FORMAT)
+        end_date = None
+        if end_date_str:
+            end_date = datetime.strptime(end_date_str, DATE_DASH_FORMAT)
         active_workitems = self.workitem_repo.get_active_workitems()
+
         recent_done_workitems = self.workitem_repo.get_done_workitems(begin_date, end_date)
 
         print(f'search_results: {search_results}')
         report_data = list()
-        report = ''
 
         # TODO: suppress repeat Entity, Journal Date headings in report
         last_notedoc_id = None
@@ -185,12 +188,32 @@ class NoteDocFileRepo:
                 report_data.append(report_entry)
 
         report_data.sort(key=self.report_sorter)
+
+        if response_format == 'text':
+            return NoteDocFileRepo._build_report_as_text(report_data)
+        else:
+            return NoteDocFileRepo._build_report_as_html(report_data)
+
+    @staticmethod
+    def _build_report_as_text(report_data: list):
+        report = ''
         for report_entry in report_data:
             report += f"\n{report_entry['EntityType']} {report_entry['EntityName']}\n"
             report += f"\n{report_entry['DateStamp']}\n"
             report += f"{report_entry['TagHeadline']}\n"
             report += f"{report_entry['TagBody']}\n"
             report += f"\n\n"
+        return report
+
+    @staticmethod
+    def _build_report_as_html(report_data: list):
+        report = ''
+        for report_entry in report_data:
+            report += f"<p>{report_entry['EntityType']} {report_entry['EntityName']}</p>"
+            report += f"<p>{report_entry['DateStamp']}</p>"
+            report += f"{report_entry['TagHeadline']}</p>"
+            report += f"{report_entry['TagBody']}</p>"
+            report += f"<p></p><p></p>"
         return report
 
     def create_tool_search_report(self, search_dict: dict) -> str:
