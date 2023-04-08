@@ -27,10 +27,16 @@ class NoteDocOutline(NoteDocument):
 
     def render_as_outline_text(self):
         outline_struct = self.outline.get_outline_structure()
-        response_lines = list()
         response_lines = [self._render_note_as_outline_text(i) for i in outline_struct]
         response_text = '\n'.join(response_lines)
         return response_text
+
+    def render_as_html_snippet(self):
+        outline_struct = self.outline.get_outline_structure()
+        response_lines = [self._render_note_as_outline_html_snippet(i) for i in outline_struct]
+        response_text = '\n'.join(response_lines)
+        return response_text
+
 
     def _render_note_as_dict(self, outline_struct_node, fields: dict = None):
         note = self.notecoll.get_note_by_id(outline_struct_node[0])
@@ -51,6 +57,15 @@ class NoteDocOutline(NoteDocument):
         depth = len(note_dict['Label'].split('.')) - 1
         padding = '  ' * depth
         note_text = padding + note_dict['Label'] + ': ' + note_dict['Summary']
+        return note_text
+
+    def _render_note_as_outline_html_snippet(self, outline_struct_node):
+        note = self.notecoll.get_note_by_id(outline_struct_node[0])
+        note_dict = note.render_as_search_dict()
+        note_dict['Label'] = self._calc_note_label(outline_struct_node[1])
+        depth = len(note_dict['Label'].split('.')) - 1
+        padding = '  ' * depth
+        note_text = f"<p>{padding}{note_dict['Label']}:{note_dict['Summary']}</p>"
         return note_text
 
     def _calc_note_label(self, outline_location):

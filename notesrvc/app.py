@@ -4,6 +4,7 @@ from datetime import datetime, timedelta
 import json
 
 from notesrvc.config import Config
+from notesrvc.model.entity import Entity
 from notesrvc.data_access.notedoc_filerepo import NoteDocFileRepo
 from notesrvc.data_access.person_repo import PersonRepo
 from notesrvc.data_access.workitem_filerepo import WorkItemFileRepo
@@ -24,16 +25,27 @@ def ping():
     return 'pong'
 
 
-@app.route('/notedocsvc/outlinetext', methods=['GET'])
+@app.route('/notedocsvc/outline/summary', methods=['GET'])
 def get_outline_text():
     entity_name = request.args.get('name')
     entity_type = request.args.get('type')
     entity_aspect = request.args.get('aspect')
+    format = request.args.get('format')
+    if not format:
+        format = 'Text'
     # TODO: Add assertion on entity_aspect: only outline types
-    file_name = _derive_file_name(entity_name, entity_type, entity_aspect)
-    notedoc = notedoc_filerepo.get_notedoc(file_name)
-    outline_text = notedoc.render_as_outline_text()
-    return outline_text
+    # file_name = _derive_file_name(entity_name, entity_type, entity_aspect)
+    # notedoc = notedoc_filerepo.get_notedoc(file_name)
+    entity = Entity(entity_type, entity_name)
+    notedoc = notedoc_filerepo.get_notedoc_entity(entity, EntityAspect.map_from(entity_aspect))
+    if format == 'text':
+        outline_text = notedoc.render_as_outline_text()
+        return outline_text
+    elif format == 'html':
+        html_snippet = notedoc.render_as_html_snippet()
+        return html_snippet
+    else:
+        return f"Unsupport format: {format}"
 
 
 @app.route('/notedocsvc/statusreport', methods=['GET'])
@@ -72,14 +84,14 @@ def handle_tool_search():
         return f"aspect: {search_dict.get('aspect')} not yet supported"
 
 
-def _derive_file_name(entity_name: str, entity_type: str, entity_aspect: str) -> str:
-    if entity_aspect == EntityAspect.TOOLBOX:
-        return f'{entity_type}.{entity_name}.ntlbox'
-    elif entity_aspect == EntityAspect.REFERENCE:
-        return f'{entity_type}.{entity_name}.nodoc'
-    else:
-        raise Exception(
-            f'Combination not support: entity_name: {entity_name}, entity_type: {entity_type}, entity_aspect: {entity_aspect}')
+# def _derive_file_name(entity_name: str, entity_type: str, entity_aspect: str) -> str:
+#     if entity_aspect == EntityAspect.TOOLBOX:
+#         return f'{entity_type}.{entity_name}.ntlbox'
+#     elif entity_aspect == EntityAspect.REFERENCE:
+#         return f'{entity_type}.{entity_name}.nodoc'
+#     else:
+#         raise Exception(
+#             f'Combination not support: entity_name: {entity_name}, entity_type: {entity_type}, entity_aspect: {entity_aspect}')
 
 
 if __name__ == '__main__':

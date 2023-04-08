@@ -5,6 +5,7 @@ class NoteDocStructure:
     JOURNAL = 'Journal'
 
 
+# TODO: Refactor as enum
 class EntityAspect:
     REFERENCE = 'Reference'
     TOOLBOX = 'Toolbox'
@@ -12,6 +13,23 @@ class EntityAspect:
     MEETING_JOURNAL = 'MeetingJournal'
     DESIGN_JOURNAL = 'DesignJournal'
     SUMMARIZER = 'Summarizer'
+
+    @staticmethod
+    def map_from(entity_aspect: str):
+        if entity_aspect == 'Reference':
+            return EntityAspect.REFERENCE
+        elif entity_aspect == 'Toolbox':
+            return EntityAspect.TOOLBOX
+        elif entity_aspect == 'WorkJournal':
+            return EntityAspect.WORK_JOURNAL
+        elif entity_aspect == 'MeetingJournal':
+            return EntityAspect.MEETING_JOURNAL
+        elif entity_aspect == 'DesignJournal':
+            return EntityAspect.DESIGN_JOURNAL
+        elif entity_aspect == 'Summarizer':
+            return EntityAspect.SUMMARIZER
+        else:
+            raise Exception(f'Not supported: {entity_aspect}')
 
 
 BEGIN_NOTE_PATTERN = '<Note [0-9]*>'

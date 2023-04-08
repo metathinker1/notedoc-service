@@ -3,6 +3,7 @@ import glob
 import json
 import os
 
+from notesrvc.model.entity import Entity
 from notesrvc.constants import EntityAspect, NoteDocStructure
 import notesrvc.service.notedoc_factory as notedoc_factory
 from notesrvc.service.nodedoc_parser import NoteDocParser
@@ -106,6 +107,10 @@ class NoteDocFileRepo:
                 file_path_parts = file.split('/')
                 file_name = file_path_parts[-1]
                 self.get_notedoc(file_name, is_full_path=False)
+
+    def get_notedoc_entity(self, entity: Entity, aspect: EntityAspect):
+        filename = NoteDocFileRepo._derive_file_name(entity, aspect)
+        return self.get_notedoc(filename)
 
     # TECH_DEBT: replace is_full_path
     def get_notedoc(self, file_name: str, is_full_path: bool = False):
@@ -261,6 +266,27 @@ class NoteDocFileRepo:
             return EntityAspect.SUMMARIZER, NoteDocStructure.OUTLINE
         else:
             raise Exception(f'Not supported: {file_name_parts[2]}')
+
+    @staticmethod
+    def _map_aspect_to_file_suffix(aspect: EntityAspect):
+        if aspect == EntityAspect.REFERENCE:
+            return 'nodoc'
+        elif aspect == EntityAspect.TOOLBOX:
+            return 'ntlbox'
+        elif aspect == EntityAspect.WORK_JOURNAL:
+            return 'nwdoc'
+        elif aspect == EntityAspect.DESIGN_JOURNAL:
+            return 'ndsdoc'
+        elif aspect == EntityAspect.MEETING_JOURNAL:
+            return 'njdoc'
+        elif aspect == EntityAspect.SUMMARIZER:
+            return 'nzdoc'
+        else:
+            raise Exception(f'Not supported: {aspect}')
+
+    @staticmethod
+    def _derive_file_name(entity: Entity, aspect: EntityAspect):
+        return f'{entity.entity_type}.{entity.entity_name}.{NoteDocFileRepo._map_aspect_to_file_suffix(aspect)}'
 
 
 if __name__ == '__main__':
