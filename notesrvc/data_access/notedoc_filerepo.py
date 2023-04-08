@@ -4,6 +4,7 @@ import json
 import os
 
 from notesrvc.model.entity import Entity
+from notesrvc.model.notedoc import NoteDocument
 from notesrvc.constants import EntityAspect, NoteDocStructure
 import notesrvc.service.notedoc_factory as notedoc_factory
 from notesrvc.service.nodedoc_parser import NoteDocParser
@@ -233,6 +234,76 @@ class NoteDocFileRepo:
         if not self.active_entity_order.get(e['Entity']):
             print('stop here')
         return self.active_entity_order.get(e['Entity'])
+
+    def create_search_report(self, search_dict: dict) -> str:
+        search_results = self.search_notes(search_dict)
+        report_data = list()
+        report = ''
+        for result in search_results:
+            notedoc = result.get('NoteDoc')
+            note = result.get('Note')
+            tags = result.get('Tags')
+            report += f'{notedoc.entity_type}.{notedoc.entity_name}\n'
+            report += f'{note.summary_text}\n'
+            report += f'{note.body_text}\n'
+        return report
+
+    def search_notes(self, search_dict: dict) -> list:
+        entity_name_arg = search_dict.get('entity_name_arg')
+        entity_aspect_arg = search_dict.get('entity_aspect_arg')
+        entity_type = search_dict.get('entity_type')
+        begin_date_str = search_dict.get('begin_date')
+        end_date_str = search_dict.get('end_date')
+        search_term = search_dict.get('search_term')
+        # Always case insensitive for now
+        search_term = search_term.lower()
+
+        entity_names = []
+        if entity_name_arg:
+            entity_names = entity_name_arg.split(',')
+
+        entity_aspects = []
+        if entity_aspect_arg:
+            entity_aspect_strings = entity_aspect_arg.split(',')
+            for entity_aspect_string in entity_aspect_strings:
+                entity_aspects.append(EntityAspect.map_from(entity_aspect_string))
+
+        begin_date = None
+        if begin_date_str:
+            begin_date = datetime.strptime(begin_date_str, DATE_DASH_FORMAT)
+        end_date = None
+        if end_date_str:
+            end_date = datetime.strptime(end_date_str, DATE_DASH_FORMAT)
+        # print(begin_date)
+        search_results = []
+        for notedoc in self.notedoc_repo_cache.values():
+            if NoteDocFileRepo._is_notedoc_file_in_search(notedoc, entity_names, entity_aspects, entity_type):
+                if notedoc.structure == NoteDocStructure.JOURNAL:
+                    # TODO: Implement filtering on search_term; Generalize beyond Status search
+                    match_notes = notedoc.search_notes_text_tag(begin_date, end_date, 'Status')
+                    if len(match_notes) > 0:
+                        search_results.extend(match_notes)
+                elif notedoc.structure == NoteDocStructure.OUTLINE:
+                    match_notes = notedoc.search_notes(search_term)
+                    if len(match_notes) > 0:
+                        search_results.extend(match_notes)
+        return search_results
+
+    @staticmethod
+    def _is_notedoc_file_in_search(notedoc: NoteDocument, entity_names: list, entity_aspects: list, entity_type: str) -> bool:
+        match_name = True
+        if len(entity_names) > 0 and notedoc.entity_name not in entity_names:
+            match_name = False
+
+        match_aspect = True
+        if len(entity_aspects) > 0 and notedoc.entity_aspect not in entity_aspects:
+            match_aspect = False
+
+        match_type = True
+        if entity_type and notedoc.entity_type != entity_type:
+            match_type = False
+
+        return match_name & match_aspect & match_type
 
     def search_journal_notes(self, **kwargs):
         # for arg in kwargs:

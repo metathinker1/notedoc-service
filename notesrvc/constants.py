@@ -14,6 +14,7 @@ class EntityAspect:
     DESIGN_JOURNAL = 'DesignJournal'
     SUMMARIZER = 'Summarizer'
 
+    # TODO: Confirm not required;  Or maybe use for abbreviations; Or simple validation
     @staticmethod
     def map_from(entity_aspect: str):
         if entity_aspect == 'Reference':

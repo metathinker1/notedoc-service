@@ -82,7 +82,7 @@ def get_status_report():
     return report
 
 
-@app.route('/notedocsvc/search', methods=['POST'])
+@app.route('/notedocsvc/search/tool', methods=['POST'])
 def handle_tool_search():
     search_dict = json.loads(request.data)
     if search_dict.get('aspect') == EntityAspect.TOOLBOX:
@@ -91,6 +91,13 @@ def handle_tool_search():
         return search_report
     else:
         return f"aspect: {search_dict.get('aspect')} not yet supported"
+
+
+@app.route('/notedocsvc/search', methods=['POST'])
+def handle_search():
+    search_dict = json.loads(request.data)
+    search_report = notedoc_filerepo.create_search_report(search_dict)
+    return search_report
 
 
 # def _derive_file_name(entity_name: str, entity_type: str, entity_aspect: str) -> str:
