@@ -19,6 +19,7 @@ class WorkItem:
             self.date_defined_str = self.date_defined.strftime(DATE_FORMAT)
         else:
             self.date_defined = None
+            self.date_defined_str = None
         self.date_done = None
         self.date_done_str = None
 

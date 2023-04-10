@@ -182,7 +182,7 @@ class NoteDocFileRepo:
                     'EntityType': notedoc.entity_type,
                     'EntityName': notedoc.entity_name,
                     'EntityAspect': notedoc.entity_aspect,
-                    'DateStamp': date_stamp,
+                    'Date': date_stamp,
                     'TagHeadline': tag.headline_text,
                     'TagBody': tag.body_text
                 }
@@ -190,31 +190,91 @@ class NoteDocFileRepo:
 
         report_data.sort(key=self.report_sorter)
 
+        active_workitems_report_data = list()
+        for workitem in active_workitems:
+            report_entry = {
+                'Entity': f'{workitem.entity.entity_type}.{workitem.entity.entity_name}',
+                'EntityType': workitem.entity.entity_type,
+                'EntityName': workitem.entity.entity_name,
+                'Person': workitem.person.abbr,
+                'Date': workitem.date_defined_str,
+                'Summary': workitem.summary_text,
+            }
+            active_workitems_report_data.append(report_entry)
+        active_workitems_report_data.sort(key=self.report_sorter)
+
+        done_workitems_report_data = list()
+        for workitem in recent_done_workitems:
+            report_entry = {
+                'Entity': f'{workitem.entity.entity_type}.{workitem.entity.entity_name}',
+                'EntityType': workitem.entity.entity_type,
+                'EntityName': workitem.entity.entity_name,
+                'Person': workitem.person.abbr,
+                'Date': workitem.date_defined_str,
+                'Summary': workitem.summary_text,
+            }
+            done_workitems_report_data.append(report_entry)
+        done_workitems_report_data.sort(key=self.report_sorter)
+
         if response_format == 'text':
-            return NoteDocFileRepo._build_report_as_text(report_data)
+            return NoteDocFileRepo._build_report_as_text(report_data, active_workitems_report_data, done_workitems_report_data)
         else:
-            return NoteDocFileRepo._build_report_as_html(report_data)
+            return NoteDocFileRepo._build_report_as_html(report_data, active_workitems_report_data, done_workitems_report_data)
 
     @staticmethod
-    def _build_report_as_text(report_data: list):
+    def _build_report_as_text(report_data: list, active_workitems_report_data: list, done_workitems_report_data: list):
         report = ''
         for report_entry in report_data:
             report += f"\n{report_entry['EntityType']} {report_entry['EntityName']}\n"
-            report += f"\n{report_entry['DateStamp']}\n"
-            report += f"{report_entry['TagHeadline']}\n"
-            report += f"{report_entry['TagBody']}\n"
+            report += f"\n{report_entry['Date']}\n"
+            if 'TagHeadline' in report_entry:
+                report += f"{report_entry['TagHeadline']}\n"
+            if 'TagBody' in report_entry:
+                report += f"{report_entry['TagBody']}\n"
             report += f"\n\n"
+
+        report += f"Active WorkItems\n\n"
+        for report_entry in active_workitems_report_data:
+            report += f"\n{report_entry['EntityType']} {report_entry['EntityName']}\n"
+            report += f"\n{report_entry['Date']}\n"
+            report += f"\n{report_entry['Person']}: {report_entry['Summary']}\n"
+        report += f"\n\n"
+
+        report += f"Done WorkItems\n\n"
+        for report_entry in done_workitems_report_data:
+            report += f"\n{report_entry['EntityType']} {report_entry['EntityName']}\n"
+            report += f"\n{report_entry['Date']}\n"
+            report += f"\n{report_entry['Person']}: {report_entry['Summary']}\n"
+        report += f"\n\n"
+
         return report
 
     @staticmethod
-    def _build_report_as_html(report_data: list):
+    def _build_report_as_html(report_data: list, active_workitems_report_data: list, done_workitems_report_data: list):
         report = ''
         for report_entry in report_data:
             report += f"<p>{report_entry['EntityType']} {report_entry['EntityName']}</p>"
-            report += f"<p>{report_entry['DateStamp']}</p>"
-            report += f"{report_entry['TagHeadline']}</p>"
-            report += f"{report_entry['TagBody']}</p>"
+            report += f"<p>{report_entry['Date']}</p>"
+            if 'TagHeadline' in report_entry:
+                report += f"{report_entry['TagHeadline']}</p>"
+            if 'TagBody' in report_entry:
+                report += f"{report_entry['TagBody']}</p>"
             report += f"<p></p><p></p>"
+
+        report += f"Active WorkItems<p><p></p></p>"
+        for report_entry in active_workitems_report_data:
+            report += f"<p>{report_entry['EntityType']} {report_entry['EntityName']}</p>"
+            report += f"<p>{report_entry['Date']}</p>"
+            report += f"<p>{report_entry['Person']}: {report_entry['Summary']}</p>"
+        report += f"<p><p></p></p>"
+
+        report += f"Done WorkItems<p><p></p></p>"
+        for report_entry in done_workitems_report_data:
+            report += f"<p>{report_entry['EntityType']} {report_entry['EntityName']}</p>"
+            report += f"<p>{report_entry['Date']}</p>"
+            report += f"<p>{report_entry['Person']}: {report_entry['Summary']}</p>"
+        report += f"<p><p></p></p>"
+
         return report
 
     def create_tool_search_report(self, search_dict: dict) -> str:
