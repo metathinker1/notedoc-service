@@ -31,10 +31,11 @@ class NoteDocFileRepo:
         self.search_cache = dict()
 
         self.supported_notedoc_types = ['nwdoc', 'nodoc', 'ndsdoc']
-        self.default_import_notedoc_types = ['ntlbox']
+        self.default_import_notedoc_types = ['ntlbox', 'nwdoc', 'njdoc']
 
         self.active_notedoc_filenames = list()
         self.active_entity_order = dict()
+        self.num_active_entities = 0
         # self.manual_entity_type_map = dict()
 
     def initialize_active_entities(self):
@@ -51,6 +52,7 @@ class NoteDocFileRepo:
             for child_entity in child_entities:
                 self.active_entity_order[child_entity] = loc
                 loc += 1
+        self.num_active_entities = loc
 
         self._initialize_active_notedoc_filenames()
 
@@ -291,9 +293,10 @@ class NoteDocFileRepo:
         return report
 
     def report_sorter(self, e):
-        if not self.active_entity_order.get(e['Entity']):
-            print('stop here')
-        return self.active_entity_order.get(e['Entity'])
+        if e['Entity'] in self.active_entity_order:
+            return self.active_entity_order.get(e['Entity'])
+        else:
+            return self.num_active_entities + 1
 
     def create_search_report(self, search_dict: dict) -> str:
         search_results = self.search_notes(search_dict)

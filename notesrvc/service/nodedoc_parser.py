@@ -54,8 +54,10 @@ class NoteDocParser:
 
         outline_level = int(line[6:-1])
         parent_loc = NoteDocParser._calc_parent_outline_location(outline_level, parse_state)
-        parse_state.notedoc.append_note(parse_state.note, parent_loc)
-
+        try:
+            parse_state.notedoc.append_note(parse_state.note, parent_loc)
+        except Exception as ex:
+            print('stop here')
         return NoteDocParser._summary_text
 
     @staticmethod
