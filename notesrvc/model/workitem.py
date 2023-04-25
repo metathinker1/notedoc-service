@@ -63,4 +63,4 @@ class WorkItemState:
             return WorkItemState.DEFINED
 
 
-ACTIVE_WORKITEM_STATES = [WorkItemState.DONE, WorkItemState.IN_PROGRESS]
+ACTIVE_WORKITEM_STATES = [WorkItemState.DEFINED, WorkItemState.IN_PROGRESS]

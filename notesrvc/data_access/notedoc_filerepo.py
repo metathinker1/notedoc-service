@@ -35,6 +35,7 @@ class NoteDocFileRepo:
 
         self.active_notedoc_filenames = list()
         self.active_entity_order = dict()
+        self.active_entity_child_entities = dict()
         self.num_active_entities = 0
         # self.manual_entity_type_map = dict()
 
@@ -49,6 +50,7 @@ class NoteDocFileRepo:
         for grouping_entity, child_entities in active_entities_dict.items():
             self.active_entity_order[grouping_entity] = loc
             loc += 1
+            self.active_entity_child_entities[grouping_entity] = child_entities.copy()
             for child_entity in child_entities:
                 self.active_entity_order[child_entity] = loc
                 loc += 1
@@ -157,8 +159,9 @@ class NoteDocFileRepo:
     # TODO: Add sort: https://www.w3schools.com/python/ref_list_sort.asp
     # Entity: entity_type & entity_name: specific ordering; then alphabetical
     # NoteJournal.date_stamp
-    def create_status_report(self, begin_date_str: str, end_date_str: str = None, response_format: str = 'text') -> str:
-        search_results = self.search_journal_notes(begin_date=begin_date_str, end_date=end_date_str)
+    def create_status_report(self, begin_date_str: str, end_date_str: str = None, entity: str = None,
+                             incl_entity_children: bool = False, response_format: str = 'text') -> str:
+        search_results = self.search_journal_notes(begin_date=begin_date_str, end_date=end_date_str, entity=entity, incl_entity_children=incl_entity_children)
         begin_date = datetime.strptime(begin_date_str, DATE_DASH_FORMAT)
         end_date = None
         if end_date_str:
@@ -225,9 +228,12 @@ class NoteDocFileRepo:
 
     @staticmethod
     def _build_report_as_text(report_data: list, active_workitems_report_data: list, done_workitems_report_data: list):
+        num_chars_section_break = 50
         report = ''
         for report_entry in report_data:
-            report += f"\n{report_entry['EntityType']} {report_entry['EntityName']}\n"
+            section_header = f"{report_entry['EntityType']} {report_entry['EntityName']}"
+            dashes = '-'*(num_chars_section_break - len(section_header))
+            report += f"\n{section_header} |{dashes}\n"
             report += f"\n{report_entry['Date']}\n"
             if 'TagHeadline' in report_entry:
                 report += f"{report_entry['TagHeadline']}\n"
@@ -235,14 +241,18 @@ class NoteDocFileRepo:
                 report += f"{report_entry['TagBody']}\n"
             report += f"\n\n"
 
-        report += f"Active WorkItems\n\n"
+        section_header = 'Active WorkItems'
+        dashes = '='*(num_chars_section_break - len(section_header))
+        report += f"\n{section_header} |{dashes}\n"
         for report_entry in active_workitems_report_data:
             report += f"\n{report_entry['EntityType']} {report_entry['EntityName']}\n"
             report += f"\n{report_entry['Date']}\n"
             report += f"\n{report_entry['Person']}: {report_entry['Summary']}\n"
         report += f"\n\n"
 
-        report += f"Done WorkItems\n\n"
+        section_header = 'Done WorkItems'
+        dashes = '='*(num_chars_section_break - len(section_header))
+        report += f"\n{section_header} |{dashes}\n"
         for report_entry in done_workitems_report_data:
             report += f"\n{report_entry['EntityType']} {report_entry['EntityName']}\n"
             report += f"\n{report_entry['Date']}\n"
@@ -311,19 +321,21 @@ class NoteDocFileRepo:
             report += f'{note.body_text}\n'
         return report
 
+    # TODO: Generalize -- currently requires TextTag, so specific to Status Report !!
     def search_notes(self, search_dict: dict) -> list:
-        entity_name_arg = search_dict.get('entity_name_arg')
+        entity_arg = search_dict.get('entity_arg')
         entity_aspect_arg = search_dict.get('entity_aspect_arg')
         entity_type = search_dict.get('entity_type')
         begin_date_str = search_dict.get('begin_date')
         end_date_str = search_dict.get('end_date')
         search_term = search_dict.get('search_term')
-        # Always case insensitive for now
-        search_term = search_term.lower()
+        if search_term:
+            # Always case insensitive for now
+            search_term = search_term.lower()
 
-        entity_names = []
-        if entity_name_arg:
-            entity_names = entity_name_arg.split(',')
+        entity_list = []
+        if entity_arg:
+            entity_list = entity_arg.split(',')
 
         entity_aspects = []
         if entity_aspect_arg:
@@ -340,7 +352,7 @@ class NoteDocFileRepo:
         # print(begin_date)
         search_results = []
         for notedoc in self.notedoc_repo_cache.values():
-            if NoteDocFileRepo._is_notedoc_file_in_search(notedoc, entity_names, entity_aspects, entity_type):
+            if NoteDocFileRepo._is_notedoc_file_in_search(notedoc, entity_list, entity_aspects, entity_type):
                 if notedoc.structure == NoteDocStructure.JOURNAL:
                     # TODO: Implement filtering on search_term; Generalize beyond Status search
                     match_notes = notedoc.search_notes_text_tag(begin_date, end_date, 'Status')
@@ -353,32 +365,48 @@ class NoteDocFileRepo:
         return search_results
 
     @staticmethod
-    def _is_notedoc_file_in_search(notedoc: NoteDocument, entity_names: list, entity_aspects: list, entity_type: str) -> bool:
+    def _is_notedoc_file_in_search(notedoc: NoteDocument, entity_list: list, entity_aspects: list, entity_type: str) -> bool:
         match_name = True
-        if len(entity_names) > 0 and notedoc.entity_name not in entity_names:
+        notedoc_entity = f'{notedoc.entity_type}.{notedoc.entity_name}'
+        if len(entity_list) > 0 and notedoc_entity not in entity_list:
             match_name = False
 
         match_aspect = True
         if len(entity_aspects) > 0 and notedoc.entity_aspect not in entity_aspects:
             match_aspect = False
 
-        match_type = True
-        if entity_type and notedoc.entity_type != entity_type:
-            match_type = False
-
-        return match_name & match_aspect & match_type
+        return match_name & match_aspect
 
     def search_journal_notes(self, **kwargs):
         # for arg in kwargs:
         #     print(arg)
         begin_date_str = kwargs.get('begin_date')
         end_date_str = kwargs.get('end_date')
+        entity = kwargs.get('entity')
+        incl_entity_children = kwargs.get('incl_entity_children')
+
         # print(begin_date_str)
         begin_date = datetime.strptime(begin_date_str, DATE_DASH_FORMAT)
         end_date = None
         if end_date_str:
             end_date = datetime.strptime(end_date_str, DATE_DASH_FORMAT)
         # print(begin_date)
+
+        # TODO: populate search_dict and call search_notes() instead of below
+        # search_dict['entity_name_arg'] = ... join entity_name with any children, if true
+        #
+        search_dict = dict()
+        if entity:
+            entity_list = [entity]
+            if incl_entity_children and entity in self.active_entity_child_entities:
+                entity_list.extend(self.active_entity_child_entities[entity])
+            search_dict['entity_arg'] = ','.join(entity_list)
+
+        search_dict['entity_aspect_arg'] = ','.join(EntityAspect.JOURNAL_ASPECTS)
+        search_dict['begin_date'] = begin_date_str
+        search_dict['end_date'] = end_date_str
+        return self.search_notes(search_dict)
+
         search_result = []
         for notedoc in self.notedoc_repo_cache.values():
             if notedoc.structure == NoteDocStructure.JOURNAL:

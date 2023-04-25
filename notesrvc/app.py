@@ -1,4 +1,5 @@
 from flask import Flask, request
+from flask_cors import CORS
 import logging
 from datetime import datetime, timedelta
 import json
@@ -11,6 +12,7 @@ from notesrvc.data_access.workitem_filerepo import WorkItemFileRepo
 from notesrvc.constants import EntityAspect, DATE_DASH_FORMAT, MONTH_DAY_DATE_FORMAT
 
 app = Flask(__name__)
+cors = CORS(app)
 
 FLASK_PORT_NUMBER = 5100
 
@@ -53,6 +55,12 @@ def get_status_report():
     days = request.args.get('days')
     begin_month_day_str = request.args.get('begin')
     end_month_day_str = request.args.get('end')
+    entity = request.args.get('entity')
+    incl_entity_children_str = request.args.get('children')
+    if incl_entity_children_str:
+        incl_entity_children = True if incl_entity_children_str.lower() == 'true' else False
+    else:
+        incl_entity_children = False
     response_format = request.args.get('format')
     if not response_format:
         response_format = 'text'
@@ -64,7 +72,7 @@ def get_status_report():
         end_date_str = None
     else:
         if begin_month_day_str:
-            if len(end_month_day_str) == 5:
+            if len(begin_month_day_str) == 5:
                 begin_date_str = f'2023-{begin_month_day_str}'
             else:
                 begin_date_str = begin_month_day_str
@@ -78,7 +86,7 @@ def get_status_report():
             else:
                 end_date_str = end_month_day_str
 
-    report = notedoc_filerepo.create_status_report(begin_date_str, end_date_str, response_format)
+    report = notedoc_filerepo.create_status_report(begin_date_str, end_date_str, entity, incl_entity_children, response_format)
     return report
 
 
@@ -120,4 +128,4 @@ if __name__ == '__main__':
 
     # TODO: Use configuration: by include_list or by_file_type ['nwdoc', 'nodoc', ...]
 
-    app.run(host='0.0.0.0', debug=False, port=FLASK_PORT_NUMBER)
+    app.run(host='0.0.0.0', debug=True, port=FLASK_PORT_NUMBER)

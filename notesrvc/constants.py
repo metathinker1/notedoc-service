@@ -14,6 +14,9 @@ class EntityAspect:
     DESIGN_JOURNAL = 'DesignJournal'
     SUMMARIZER = 'Summarizer'
 
+    JOURNAL_ASPECTS = [MEETING_JOURNAL, WORK_JOURNAL, DESIGN_JOURNAL]
+    REFERENCE_ASPECTS = [REFERENCE, TOOLBOX, SUMMARIZER]
+
     # TODO: Confirm not required;  Or maybe use for abbreviations; Or simple validation
     @staticmethod
     def map_from(entity_aspect: str):
