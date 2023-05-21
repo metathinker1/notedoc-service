@@ -160,7 +160,8 @@ class NoteDocFileRepo:
     # Entity: entity_type & entity_name: specific ordering; then alphabetical
     # NoteJournal.date_stamp
     def create_status_report(self, begin_date_str: str, end_date_str: str = None, entity: str = None,
-                             incl_entity_children: bool = False, response_format: str = 'text') -> str:
+                             incl_entity_children: bool = False, incl_work_items: bool = False,
+                             response_format: str = 'text') -> str:
         search_results = self.search_journal_notes(begin_date=begin_date_str, end_date=end_date_str, entity=entity, incl_entity_children=incl_entity_children)
         begin_date = datetime.strptime(begin_date_str, DATE_DASH_FORMAT)
         end_date = None
@@ -196,70 +197,187 @@ class NoteDocFileRepo:
         report_data.sort(key=self.report_sorter)
 
         active_workitems_report_data = list()
-        for workitem in active_workitems:
-            report_entry = {
-                'Entity': f'{workitem.entity.entity_type}.{workitem.entity.entity_name}',
-                'EntityType': workitem.entity.entity_type,
-                'EntityName': workitem.entity.entity_name,
-                'Person': workitem.person.abbr,
-                'Date': workitem.date_defined_str,
-                'Summary': workitem.summary_text,
-            }
-            active_workitems_report_data.append(report_entry)
-        active_workitems_report_data.sort(key=self.report_sorter)
+        if incl_work_items:
+            for workitem in active_workitems:
+                report_entry = {
+                    'Entity': f'{workitem.entity.entity_type}.{workitem.entity.entity_name}',
+                    'EntityType': workitem.entity.entity_type,
+                    'EntityName': workitem.entity.entity_name,
+                    'Person': workitem.person.abbr,
+                    'Date': workitem.date_defined_str,
+                    'Summary': workitem.summary_text,
+                }
+                active_workitems_report_data.append(report_entry)
+            active_workitems_report_data.sort(key=self.report_sorter)
 
         done_workitems_report_data = list()
-        for workitem in recent_done_workitems:
-            report_entry = {
-                'Entity': f'{workitem.entity.entity_type}.{workitem.entity.entity_name}',
-                'EntityType': workitem.entity.entity_type,
-                'EntityName': workitem.entity.entity_name,
-                'Person': workitem.person.abbr,
-                'Date': workitem.date_defined_str,
-                'Summary': workitem.summary_text,
-            }
-            done_workitems_report_data.append(report_entry)
-        done_workitems_report_data.sort(key=self.report_sorter)
+        if incl_work_items:
+            for workitem in recent_done_workitems:
+                report_entry = {
+                    'Entity': f'{workitem.entity.entity_type}.{workitem.entity.entity_name}',
+                    'EntityType': workitem.entity.entity_type,
+                    'EntityName': workitem.entity.entity_name,
+                    'Person': workitem.person.abbr,
+                    'Date': workitem.date_defined_str,
+                    'Summary': workitem.summary_text,
+                }
+                done_workitems_report_data.append(report_entry)
+            done_workitems_report_data.sort(key=self.report_sorter)
 
         if response_format == 'text':
-            return NoteDocFileRepo._build_report_as_text(report_data, active_workitems_report_data, done_workitems_report_data)
+            return NoteDocFileRepo._build_report(report_data, active_workitems_report_data, done_workitems_report_data, response_format)
         else:
-            return NoteDocFileRepo._build_report_as_html(report_data, active_workitems_report_data, done_workitems_report_data)
+            return NoteDocFileRepo._build_report(report_data, active_workitems_report_data, done_workitems_report_data, response_format)
+            # return NoteDocFileRepo._build_report_as_html(report_data, active_workitems_report_data, done_workitems_report_data)
+
+    @staticmethod
+    def _build_report(report_data: list, active_workitems_report_data: list, done_workitems_report_data: list, response_format: str):
+        if response_format == 'text':
+            lb = '\n'
+            le = '\n'
+        else:
+            lb = '<p>'
+            le = '</p>'
+        num_chars_section_break = 50
+        report = ''
+        unique_entity, unique_date = NoteDocFileRepo._derive_unique_entity_date_or_none(report_data)
+        if unique_entity:
+            section_entity_header = f"{unique_entity}"
+            dashes = '-'*(num_chars_section_break - len(section_entity_header))
+            report += f"{lb}--| {section_entity_header} |{dashes}{le}"
+        if unique_date:
+            date_section_header = f"{unique_date}"
+            dashes = '-' * (num_chars_section_break - len(date_section_header))
+            report += f"{lb}--| {date_section_header} |{dashes}{le}"
+
+        prev_entity_section_header = None
+        prev_date_section_header = None
+        for report_entry in report_data:
+            if not unique_entity:
+                section_entity_header = f"{report_entry['EntityType']} {report_entry['EntityName']}"
+                dashes = '-'*(num_chars_section_break - len(section_entity_header))
+                if prev_entity_section_header:
+                    if prev_entity_section_header != section_entity_header:
+                        report += f"{lb}{le}"
+                        report += f"{lb}--| {section_entity_header} |{dashes}{le}"
+                else:
+                    report += f"{lb}--| {section_entity_header} |{dashes}{le}"
+            if not unique_date:
+                date_section_header = f"{report_entry['Date']}"
+                dashes = '-' * (num_chars_section_break - len(date_section_header) - 2)
+                if prev_date_section_header:
+                    if prev_date_section_header != date_section_header:
+                        report += f"{lb}----| {date_section_header} |{dashes}{le}"
+                else:
+                    report += f"{lb}----| {date_section_header} |{dashes}{le}"
+            if 'TagHeadline' in report_entry:
+                report += f"{report_entry['TagHeadline']}{le}"
+            if 'TagBody' in report_entry:
+                report += f"{report_entry['TagBody']}{le}"
+            report += f"{lb}{le}"
+            if not prev_entity_section_header:
+                prev_entity_section_header = section_entity_header
+                prev_date_section_header = date_section_header
+            elif prev_entity_section_header == section_entity_header:
+                prev_date_section_header = date_section_header
+            else:
+                prev_entity_section_header = section_entity_header
+                prev_date_section_header = None
+
+
+        if len(active_workitems_report_data) > 0:
+            section_entity_header = 'Active WorkItems'
+            dashes = '='*(num_chars_section_break - len(section_entity_header))
+            report += f"{lb}{section_entity_header} |{dashes}{le}"
+            for report_entry in active_workitems_report_data:
+                report += f"{lb}{report_entry['EntityType']} {report_entry['EntityName']}{le}"
+                report += f"{lb}{report_entry['Date']}{le}"
+                report += f"{lb}{report_entry['Person']}: {report_entry['Summary']}{le}"
+            report += f"{lb}{le}"
+
+        if len(done_workitems_report_data):
+            section_entity_header = 'Done WorkItems'
+            dashes = '='*(num_chars_section_break - len(section_entity_header))
+            report += f"{lb}{section_entity_header} |{dashes}{le}"
+            for report_entry in done_workitems_report_data:
+                report += f"{lb}{report_entry['EntityType']} {report_entry['EntityName']}{le}"
+                report += f"{lb}{report_entry['Date']}{le}"
+                report += f"{lb}{report_entry['Person']}: {report_entry['Summary']}{le}"
+            report += f"{lb}{le}"
+
+        return report
 
     @staticmethod
     def _build_report_as_text(report_data: list, active_workitems_report_data: list, done_workitems_report_data: list):
         num_chars_section_break = 50
         report = ''
+        unique_entity, unique_date = NoteDocFileRepo._derive_unique_entity_date_or_none(report_data)
+        if unique_entity:
+            section_entity_header = f"{unique_entity}"
+            dashes = '-'*(num_chars_section_break - len(section_entity_header))
+            report += f"\n--| {section_entity_header} |{dashes}\n"
+        if unique_date:
+            date_section_header = f"{unique_date}"
+            dashes = '-' * (num_chars_section_break - len(date_section_header))
+            report += f"\n--| {date_section_header} |{dashes}\n"
+
+        prev_entity_section_header = None
+        prev_date_section_header = None
         for report_entry in report_data:
-            section_header = f"{report_entry['EntityType']} {report_entry['EntityName']}"
-            dashes = '-'*(num_chars_section_break - len(section_header))
-            report += f"\n{section_header} |{dashes}\n"
-            report += f"\n{report_entry['Date']}\n"
+            if not unique_entity:
+                section_entity_header = f"{report_entry['EntityType']} {report_entry['EntityName']}"
+                dashes = '-'*(num_chars_section_break - len(section_entity_header))
+                if prev_entity_section_header:
+                    if prev_entity_section_header != section_entity_header:
+                        report += f"\n--| {section_entity_header} |{dashes}\n"
+                else:
+                    report += f"\n--| {section_entity_header} |{dashes}\n"
+            if not unique_date:
+                date_section_header = f"{report_entry['Date']}"
+                dashes = '-' * (num_chars_section_break - len(date_section_header))
+                if prev_date_section_header:
+                    if prev_date_section_header != date_section_header:
+                        report += f"\n--| {date_section_header} |{dashes}\n"
+                else:
+                    report += f"\n--| {date_section_header} |{dashes}\n"
             if 'TagHeadline' in report_entry:
                 report += f"{report_entry['TagHeadline']}\n"
             if 'TagBody' in report_entry:
                 report += f"{report_entry['TagBody']}\n"
             report += f"\n\n"
+            prev_entity_section_header = section_entity_header
 
-        section_header = 'Active WorkItems'
-        dashes = '='*(num_chars_section_break - len(section_header))
-        report += f"\n{section_header} |{dashes}\n"
-        for report_entry in active_workitems_report_data:
-            report += f"\n{report_entry['EntityType']} {report_entry['EntityName']}\n"
-            report += f"\n{report_entry['Date']}\n"
-            report += f"\n{report_entry['Person']}: {report_entry['Summary']}\n"
-        report += f"\n\n"
+        if len(active_workitems_report_data) > 0:
+            section_entity_header = 'Active WorkItems'
+            dashes = '='*(num_chars_section_break - len(section_entity_header))
+            report += f"\n{section_entity_header} |{dashes}\n"
+            for report_entry in active_workitems_report_data:
+                report += f"\n{report_entry['EntityType']} {report_entry['EntityName']}\n"
+                report += f"\n{report_entry['Date']}\n"
+                report += f"\n{report_entry['Person']}: {report_entry['Summary']}\n"
+            report += f"\n\n"
 
-        section_header = 'Done WorkItems'
-        dashes = '='*(num_chars_section_break - len(section_header))
-        report += f"\n{section_header} |{dashes}\n"
-        for report_entry in done_workitems_report_data:
-            report += f"\n{report_entry['EntityType']} {report_entry['EntityName']}\n"
-            report += f"\n{report_entry['Date']}\n"
-            report += f"\n{report_entry['Person']}: {report_entry['Summary']}\n"
-        report += f"\n\n"
+        if len(done_workitems_report_data):
+            section_entity_header = 'Done WorkItems'
+            dashes = '='*(num_chars_section_break - len(section_entity_header))
+            report += f"\n{section_entity_header} |{dashes}\n"
+            for report_entry in done_workitems_report_data:
+                report += f"\n{report_entry['EntityType']} {report_entry['EntityName']}\n"
+                report += f"\n{report_entry['Date']}\n"
+                report += f"\n{report_entry['Person']}: {report_entry['Summary']}\n"
+            report += f"\n\n"
 
         return report
+
+    @staticmethod
+    def _derive_unique_entity_date_or_none(report_data: list):
+        entities = [f"{e['EntityType']} {e['EntityName']}" for e in report_data]
+        unique_entities = set(entities)
+        unique_entity = unique_entities.pop() if len(unique_entities) == 1 else None
+        dates = [e['Date'] for e in report_data]
+        unique_dates = set(dates)
+        unique_date = unique_dates.pop() if len(unique_dates) == 1 else None
+        return unique_entity, unique_date
 
     @staticmethod
     def _build_report_as_html(report_data: list, active_workitems_report_data: list, done_workitems_report_data: list):
@@ -273,19 +391,21 @@ class NoteDocFileRepo:
                 report += f"{report_entry['TagBody']}</p>"
             report += f"<p></p><p></p>"
 
-        report += f"Active WorkItems<p><p></p></p>"
-        for report_entry in active_workitems_report_data:
-            report += f"<p>{report_entry['EntityType']} {report_entry['EntityName']}</p>"
-            report += f"<p>{report_entry['Date']}</p>"
-            report += f"<p>{report_entry['Person']}: {report_entry['Summary']}</p>"
-        report += f"<p><p></p></p>"
+        if len(active_workitems_report_data) > 0:
+            report += f"Active WorkItems<p><p></p></p>"
+            for report_entry in active_workitems_report_data:
+                report += f"<p>{report_entry['EntityType']} {report_entry['EntityName']}</p>"
+                report += f"<p>{report_entry['Date']}</p>"
+                report += f"<p>{report_entry['Person']}: {report_entry['Summary']}</p>"
+            report += f"<p><p></p></p>"
 
-        report += f"Done WorkItems<p><p></p></p>"
-        for report_entry in done_workitems_report_data:
-            report += f"<p>{report_entry['EntityType']} {report_entry['EntityName']}</p>"
-            report += f"<p>{report_entry['Date']}</p>"
-            report += f"<p>{report_entry['Person']}: {report_entry['Summary']}</p>"
-        report += f"<p><p></p></p>"
+        if len(done_workitems_report_data):
+            report += f"Done WorkItems<p><p></p></p>"
+            for report_entry in done_workitems_report_data:
+                report += f"<p>{report_entry['EntityType']} {report_entry['EntityName']}</p>"
+                report += f"<p>{report_entry['Date']}</p>"
+                report += f"<p>{report_entry['Person']}: {report_entry['Summary']}</p>"
+            report += f"<p><p></p></p>"
 
         return report
 

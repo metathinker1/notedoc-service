@@ -9,7 +9,9 @@ curl "http://localhost:5100/notedocsvc/statusreport?days=30"
 curl "http://localhost:5100/notedocsvc/statusreport?begin=03-23"
 curl "http://localhost:5100/notedocsvc/statusreport?begin=03-23&end=03-25"
 
-curl "http://localhost:5100/notedocsvc/statusreport?begin=04-20&entity=APM_AlertRouter&children=False"
+curl "http://localhost:5100/notedocsvc/statusreport?begin=03-15&entity=Project.APM_AlertRouter&children=False"
+
+curl "http://localhost:5100/notedocsvc/statusreport?begin=03-15&entity=Project.APM_AlertRouter&children=False&work=False"
 
 curl "http://localhost:5100/notedocsvc/statusreport?days=8&format=html"
 

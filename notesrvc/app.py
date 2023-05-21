@@ -55,12 +55,16 @@ def get_status_report():
     days = request.args.get('days')
     begin_month_day_str = request.args.get('begin')
     end_month_day_str = request.args.get('end')
+    # entity: <entity_type>.<entity_name>
     entity = request.args.get('entity')
     incl_entity_children_str = request.args.get('children')
+    incl_work_items_str = request.args.get('work')
+    incl_entity_children = False
     if incl_entity_children_str:
         incl_entity_children = True if incl_entity_children_str.lower() == 'true' else False
-    else:
-        incl_entity_children = False
+    incl_work_items = True
+    if incl_work_items_str:
+        incl_work_items = True if incl_work_items_str.lower() == 'true' else False
     response_format = request.args.get('format')
     if not response_format:
         response_format = 'text'
@@ -86,7 +90,7 @@ def get_status_report():
             else:
                 end_date_str = end_month_day_str
 
-    report = notedoc_filerepo.create_status_report(begin_date_str, end_date_str, entity, incl_entity_children, response_format)
+    report = notedoc_filerepo.create_status_report(begin_date_str, end_date_str, entity, incl_entity_children, incl_work_items, response_format)
     return report
 
 
