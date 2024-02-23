@@ -62,7 +62,7 @@ def get_status_report():
     incl_entity_children = False
     if incl_entity_children_str:
         incl_entity_children = True if incl_entity_children_str.lower() == 'true' else False
-    incl_work_items = True
+    incl_work_items = False
     if incl_work_items_str:
         incl_work_items = True if incl_work_items_str.lower() == 'true' else False
     response_format = request.args.get('format')
@@ -77,7 +77,7 @@ def get_status_report():
     else:
         if begin_month_day_str:
             if len(begin_month_day_str) == 5:
-                begin_date_str = f'2023-{begin_month_day_str}'
+                begin_date_str = f'2024-{begin_month_day_str}'
             else:
                 begin_date_str = begin_month_day_str
         else:
@@ -86,7 +86,7 @@ def get_status_report():
         end_date_str = None
         if end_month_day_str:
             if len(end_month_day_str) == 5:
-                end_date_str = f'2023-{end_month_day_str}'
+                end_date_str = f'2024-{end_month_day_str}'
             else:
                 end_date_str = end_month_day_str
 
