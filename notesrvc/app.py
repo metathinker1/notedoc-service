@@ -68,6 +68,7 @@ def get_status_report():
     response_format = request.args.get('format')
     if not response_format:
         response_format = 'text'
+    incl_summary_items = True
 
     if days:
         num_days_before = int(days)
@@ -90,7 +91,7 @@ def get_status_report():
             else:
                 end_date_str = end_month_day_str
 
-    report = notedoc_filerepo.create_status_report(begin_date_str, end_date_str, entity, incl_entity_children, incl_work_items, response_format)
+    report = notedoc_filerepo.create_status_report(begin_date_str, end_date_str, entity, incl_entity_children, incl_work_items, incl_summary_items, response_format)
     return report
 
 

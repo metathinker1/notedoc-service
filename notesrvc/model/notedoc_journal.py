@@ -18,11 +18,11 @@ class NoteDocJournal(NoteDocument):
         notes_as_dict_list = [self._render_note_as_dict(n) for n in self.notecoll.notes]
         return {"NoteDocId": self.notedoc_id, "Notes": notes_as_dict_list}
 
-    def search_notes_text_tag(self, begin_date: datetime, end_date: datetime, text_tag_type: str) -> list:
+    def search_notes_text_tag(self, begin_date: datetime, end_date: datetime, text_tag_type_matches: list) -> list:
         match_notes = list()
         for note in self.notecoll.notes:
             if note.is_in_date_range(begin_date, end_date):
-                tags = note.get_tags(text_tag_type='Status')
+                tags = note.get_tags(text_tag_type_matches)
                 if len(tags) > 0:
                     match_notes.append({'NoteDoc': self, 'Note': note, 'Tags': tags})
 

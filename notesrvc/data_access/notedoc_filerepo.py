@@ -161,8 +161,10 @@ class NoteDocFileRepo:
     # NoteJournal.date_stamp
     def create_status_report(self, begin_date_str: str, end_date_str: str = None, entity: str = None,
                              incl_entity_children: bool = False, incl_work_items: bool = False,
-                             response_format: str = 'text') -> str:
-        search_results = self.search_journal_notes(begin_date=begin_date_str, end_date=end_date_str, entity=entity, incl_entity_children=incl_entity_children)
+                             incl_summary_items: bool = True, response_format: str = 'text') -> str:
+        search_results = self.search_journal_notes(begin_date=begin_date_str, end_date=end_date_str,
+                                                   entity=entity, incl_entity_children=incl_entity_children,
+                                                   incl_summary_items=incl_summary_items)
         begin_date = datetime.strptime(begin_date_str, DATE_DASH_FORMAT)
         end_date = None
         if end_date_str:
@@ -442,7 +444,7 @@ class NoteDocFileRepo:
         return report
 
     # TODO: Generalize -- currently requires TextTag, so specific to Status Report !!
-    def search_notes(self, search_dict: dict) -> list:
+    def search_notes(self, search_dict: dict, text_tag_type_matches: list) -> list:
         entity_arg = search_dict.get('entity_arg')
         entity_aspect_arg = search_dict.get('entity_aspect_arg')
         entity_type = search_dict.get('entity_type')
@@ -475,7 +477,7 @@ class NoteDocFileRepo:
             if NoteDocFileRepo._is_notedoc_file_in_search(notedoc, entity_list, entity_aspects, entity_type):
                 if notedoc.structure == NoteDocStructure.JOURNAL:
                     # TODO: Implement filtering on search_term; Generalize beyond Status search
-                    match_notes = notedoc.search_notes_text_tag(begin_date, end_date, 'Status')
+                    match_notes = notedoc.search_notes_text_tag(begin_date, end_date, text_tag_type_matches)
                     if len(match_notes) > 0:
                         search_results.extend(match_notes)
                 elif notedoc.structure == NoteDocStructure.OUTLINE:
@@ -504,6 +506,7 @@ class NoteDocFileRepo:
         end_date_str = kwargs.get('end_date')
         entity = kwargs.get('entity')
         incl_entity_children = kwargs.get('incl_entity_children')
+        incl_summary_items = kwargs.get('incl_summary_items')
 
         # print(begin_date_str)
         begin_date = datetime.strptime(begin_date_str, DATE_DASH_FORMAT)
@@ -525,15 +528,20 @@ class NoteDocFileRepo:
         search_dict['entity_aspect_arg'] = ','.join(EntityAspect.JOURNAL_ASPECTS)
         search_dict['begin_date'] = begin_date_str
         search_dict['end_date'] = end_date_str
-        return self.search_notes(search_dict)
+        # TODO: Move to constants: multiple lists
+        text_tag_type_matches = ['Status']
+        if incl_summary_items:
+            text_tag_type_matches.extend(['Summary', 'Work Summary', 'Support Summary', 'Discussion Summary'])
 
-        search_result = []
-        for notedoc in self.notedoc_repo_cache.values():
-            if notedoc.structure == NoteDocStructure.JOURNAL:
-                match_notes = notedoc.search_notes_text_tag(begin_date, end_date, 'Status')
-                if len(match_notes) > 0:
-                    search_result.extend(match_notes)
-        return search_result
+        return self.search_notes(search_dict, text_tag_type_matches)
+
+        # search_result = []
+        # for notedoc in self.notedoc_repo_cache.values():
+        #     if notedoc.structure == NoteDocStructure.JOURNAL:
+        #         match_notes = notedoc.search_notes_text_tag(begin_date, end_date, text_tag_type_matches)
+        #         if len(match_notes) > 0:
+        #             search_result.extend(match_notes)
+        # return search_result
 
     def search_for_tool(self, **kwargs):
         search_term = kwargs.get('search_term')
