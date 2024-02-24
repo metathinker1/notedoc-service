@@ -21,16 +21,12 @@ class Note:
         # Only JournalNote supports
         return False
 
-    def get_tags(self, **kwargs):
+    def get_tags(self, text_tag_type_matches: list):
         return_tags = list()
-        if 'text_tag_type' in kwargs:
-            tag_type = kwargs['text_tag_type']
-            for tag in self.tags:
-                if tag.is_tag_text_type(tag_type):
-                    return_tags.append(tag)
-            return return_tags
-        else:
-            return self.tags.copy()
+        for tag in self.tags:
+            if tag.is_tag_text_type_in(text_tag_type_matches):
+                return_tags.append(tag)
+        return return_tags
 
     def render_as_dict(self, fields: dict = None):
         if not fields:

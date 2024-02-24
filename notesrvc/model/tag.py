@@ -7,6 +7,9 @@ class Tag:
     def is_tag_text_type(self, tag_text_type: str) -> bool:
         return False
 
+    def is_tag_text_type_in(self, tag_text_types: list):
+        return False
+
 
 class TextTag(Tag):
 
@@ -18,3 +21,6 @@ class TextTag(Tag):
 
     def is_tag_text_type(self, tag_text_type: str) -> bool:
         return self.text_tag_type == tag_text_type
+
+    def is_tag_text_type_in(self, tag_text_types: list):
+        return self.text_tag_type in tag_text_types
