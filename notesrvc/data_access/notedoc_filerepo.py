@@ -536,7 +536,7 @@ class NoteDocFileRepo:
         # TODO: Move to constants: multiple lists
         text_tag_type_matches = ['Status']
         if incl_summary_items:
-            text_tag_type_matches.extend(['Summary', 'Work Summary', 'Support Summary', 'Discussion Summary'])
+            text_tag_type_matches.extend(['Summary', 'Work Summary', 'Support Summary', 'Discussion Summary', 'Meeting Summary'])
 
         return self.search_notes(search_dict, text_tag_type_matches)
 

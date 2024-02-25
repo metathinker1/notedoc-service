@@ -226,6 +226,8 @@ class NoteDocParser:
             text_tag.text_tag_type = text_tag_text[:token_loc]
             if token_loc < len(text_tag_text) - 1:
                 text_tag.headline_text = text_tag_text[token_loc+1:]
+        else:
+            text_tag.text_tag_type = text_tag_text
         text_tag.body_text = ''
         return text_tag
 
