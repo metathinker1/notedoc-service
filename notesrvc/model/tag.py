@@ -15,7 +15,7 @@ class TextTag(Tag):
 
     def __init__(self, tag_id: str = None):
         super().__init__(tag_id)
-        self.headline_text = None
+        self.headline_text = ''
         self.body_text = None
         self.text_tag_type = None
 

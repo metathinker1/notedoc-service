@@ -212,11 +212,22 @@ class NoteDocParser:
     def _create_text_tag(line: str, parse_state: NoteDocParseState) -> TextTag:
         text_tag = TextTag()
         text_tag.tag_id = 'T' + str(len(parse_state.note.tags))
-        text_tag.headline_text = line[len(BEGIN_TEXT_TAG):]
-        parts = text_tag.headline_text.split(":")
-        if parts and len(parts) > 0:
-            # TODO: validate with TEXT_TAG_TYPES
-            text_tag.text_tag_type = parts[0]
+        # 2024.02.25: rob.wood
+        # text_tag.headline_text = line[len(BEGIN_TEXT_TAG):]
+        # parts = text_tag.headline_text.split(":")
+        # if parts and len(parts) > 0:
+        #     # TODO: validate with TEXT_TAG_TYPES
+        #     text_tag.text_tag_type = parts[0]
+        #     if len(parts) > 1:
+        #         text_tag.headline_text = parts[1]
+        text_tag_text = line[len(BEGIN_TEXT_TAG):]
+        token_loc = text_tag_text.find(':')
+        if token_loc > 0:
+            text_tag.text_tag_type = text_tag_text[:token_loc]
+            if token_loc < len(text_tag_text) - 1:
+                text_tag.headline_text = text_tag_text[token_loc+1:]
+        else:
+            text_tag.text_tag_type = text_tag_text
         text_tag.body_text = ''
         return text_tag
 
