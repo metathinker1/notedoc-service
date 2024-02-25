@@ -12,6 +12,7 @@ from notesrvc.config import Config
 from notesrvc.data_access.person_repo import PersonRepo
 from notesrvc.data_access.workitem_filerepo import WorkItemFileRepo
 from notesrvc.constants import DATE_DASH_FORMAT
+from notesrvc.reports.status_report import HTMLStatusReport
 
 # NOTEDOC_FILE_REPO_PATH = '/Users/robertwood/Google Drive/My Drive/AncNoteDocRepo/_Ancestry'
 # NOTEDOC_FILE_REPO_PATH = '/Users/robertwood/Project.ThoughtPal/AncNoteDocRepo'
@@ -38,6 +39,8 @@ class NoteDocFileRepo:
         self.active_entity_child_entities = dict()
         self.num_active_entities = 0
         # self.manual_entity_type_map = dict()
+
+        self.html_status_report = HTMLStatusReport()
 
     def initialize_active_entities(self):
         file_name = config.notedoc_active_entities_file
@@ -191,6 +194,7 @@ class NoteDocFileRepo:
                     'EntityName': notedoc.entity_name,
                     'EntityAspect': notedoc.entity_aspect,
                     'Date': date_stamp,
+                    'TagType': tag.text_tag_type,
                     'TagHeadline': tag.headline_text,
                     'TagBody': tag.body_text
                 }
@@ -229,7 +233,8 @@ class NoteDocFileRepo:
         if response_format == 'text':
             return NoteDocFileRepo._build_report(report_data, active_workitems_report_data, done_workitems_report_data, response_format)
         else:
-            return NoteDocFileRepo._build_report(report_data, active_workitems_report_data, done_workitems_report_data, response_format)
+            return self.html_status_report.create_report(report_data)
+            # return NoteDocFileRepo._build_report(report_data, active_workitems_report_data, done_workitems_report_data, response_format)
             # return NoteDocFileRepo._build_report_as_html(report_data, active_workitems_report_data, done_workitems_report_data)
 
     @staticmethod
