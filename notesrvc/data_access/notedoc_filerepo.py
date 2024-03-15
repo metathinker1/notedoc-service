@@ -436,7 +436,10 @@ class NoteDocFileRepo:
             return self.num_active_entities + 1
 
     def create_search_report(self, search_dict: dict) -> str:
-        search_results = self.search_notes(search_dict)
+        # 2024.03.14: disable text_tag_type_matches for now;
+        # TODO: design search_dict solution for text_tag_type_matches
+        text_tag_type_matches = []
+        search_results = self.search_notes(search_dict, text_tag_type_matches)
         report_data = list()
         report = ''
         for result in search_results:
@@ -450,7 +453,7 @@ class NoteDocFileRepo:
 
     # TODO: Generalize -- currently requires TextTag, so specific to Status Report !!
     def search_notes(self, search_dict: dict, text_tag_type_matches: list) -> list:
-        entity_arg = search_dict.get('entity_arg')
+        entity_name = search_dict.get('entity_name_arg')
         entity_aspect_arg = search_dict.get('entity_aspect_arg')
         entity_type = search_dict.get('entity_type')
         begin_date_str = search_dict.get('begin_date')
@@ -460,9 +463,11 @@ class NoteDocFileRepo:
             # Always case insensitive for now
             search_term = search_term.lower()
 
-        entity_list = []
-        if entity_arg:
-            entity_list = entity_arg.split(',')
+        # entity_list = []
+        # if entity_arg:
+        #     entity_list = entity_arg.split(',')
+        entity = f'{entity_type}.{entity_name}'
+        entity_list = [entity]
 
         entity_aspects = []
         if entity_aspect_arg:
