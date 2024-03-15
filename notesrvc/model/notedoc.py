@@ -33,5 +33,23 @@ class NoteDocument:
                 match_notes.append({'NoteDoc': self, 'Note': note, 'Tags': []})
         return match_notes
 
+    def is_entity_pattern_match(self, entity_pattern: str) -> bool:
+        entity_aspect_abbr = NoteDocument.derive_entity_aspect_abbr(self.entity_aspect)
+        # notedoc_entity = f'{self.entity_type}.{self.entity_name}.{entity_aspect_abbr}'
+        pattern_match_parts = entity_pattern.split('.')
+        entity_type_match = (pattern_match_parts[0] == "*") | (pattern_match_parts[0] == self.entity_type)
+        entity_aspect_match = (pattern_match_parts[2] == "*") | (pattern_match_parts[2] == entity_aspect_abbr)
+        #TODO: Implement regex rules for supporting * wildcard
+        entity_name_match = pattern_match_parts[1] == self.entity_name
+        return entity_type_match & entity_name_match & entity_aspect_match
+
     def render_as_text(self, fields: dict = None):
         return self.notecoll.render_as_text()
+
+    #TODO: add remaining cases
+    @staticmethod
+    def derive_entity_aspect_abbr(entity_aspect_arg):
+        if entity_aspect_arg == 'Toolbox':
+            return "ntlbox"
+        else:
+            return "nwdoc"

@@ -453,6 +453,7 @@ class NoteDocFileRepo:
 
     # TODO: Generalize -- currently requires TextTag, so specific to Status Report !!
     def search_notes(self, search_dict: dict, text_tag_type_matches: list) -> list:
+        entity_pattern = search_dict.get('entity_pattern')
         entity_name = search_dict.get('entity_name_arg')
         entity_aspect_arg = search_dict.get('entity_aspect_arg')
         entity_type = search_dict.get('entity_type')
@@ -466,8 +467,9 @@ class NoteDocFileRepo:
         # entity_list = []
         # if entity_arg:
         #     entity_list = entity_arg.split(',')
-        entity = f'{entity_type}.{entity_name}'
-        entity_list = [entity]
+        if entity_pattern is None:
+            entity_aspect_abbr = NoteDocument.derive_entity_aspect_abbr(entity_aspect_arg)
+            entity_pattern = f'{entity_type}.{entity_name}.{entity_aspect_abbr}'
 
         entity_aspects = []
         if entity_aspect_arg:
@@ -484,7 +486,8 @@ class NoteDocFileRepo:
         # print(begin_date)
         search_results = []
         for notedoc in self.notedoc_repo_cache.values():
-            if NoteDocFileRepo._is_notedoc_file_in_search(notedoc, entity_list, entity_aspects, entity_type):
+            # if NoteDocFileRepo._is_notedoc_file_in_search(notedoc, entity_pattern, entity_aspects, entity_type):
+            if notedoc.is_entity_pattern_match(entity_pattern):
                 if notedoc.structure == NoteDocStructure.JOURNAL:
                     # TODO: Implement filtering on search_term; Generalize beyond Status search
                     match_notes = notedoc.search_notes_text_tag(begin_date, end_date, text_tag_type_matches)
@@ -496,18 +499,19 @@ class NoteDocFileRepo:
                         search_results.extend(match_notes)
         return search_results
 
+
     @staticmethod
-    def _is_notedoc_file_in_search(notedoc: NoteDocument, entity_list: list, entity_aspects: list, entity_type: str) -> bool:
-        match_name = True
-        notedoc_entity = f'{notedoc.entity_type}.{notedoc.entity_name}'
-        if len(entity_list) > 0 and notedoc_entity not in entity_list:
-            match_name = False
+    def _is_notedoc_file_in_search(notedoc: NoteDocument, entity_pattern: str, entity_aspects: list, entity_type: str) -> bool:
+        # match_name = True
+        # if len(entity_list) > 0 and notedoc_entity not in entity_list:
+        #     match_name = False
 
-        match_aspect = True
-        if len(entity_aspects) > 0 and notedoc.entity_aspect not in entity_aspects:
-            match_aspect = False
+        # match_aspect = True
+        # if len(entity_aspects) > 0 and notedoc.entity_aspect not in entity_aspects:
+        #     match_aspect = False
+        # return match_name & match_aspect
 
-        return match_name & match_aspect
+        return notedoc.is_entity_pattern_match(entity_pattern)
 
     def search_journal_notes(self, **kwargs):
         # for arg in kwargs:
