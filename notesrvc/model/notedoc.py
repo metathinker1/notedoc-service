@@ -1,7 +1,7 @@
 
 from notesrvc.model.notecoll import NoteCollection
 from notesrvc.model.note import Note
-
+from notesrvc.constants import EntityAspect
 
 class NoteDocument:
 
@@ -33,14 +33,17 @@ class NoteDocument:
                 match_notes.append({'NoteDoc': self, 'Note': note, 'Tags': []})
         return match_notes
 
-    def is_entity_pattern_match(self, entity_pattern: str) -> bool:
-        entity_aspect_abbr = NoteDocument.derive_entity_aspect_abbr(self.entity_aspect)
+    def is_entity_pattern_match(self, entity_match: dict) -> bool:
+        # entity_match = {'EntityTypes': [entity_pattern_parts[0]], 'EntityNames': [entity_pattern_parts[1]], 'EntityAspects': [entity_aspect]}
         # notedoc_entity = f'{self.entity_type}.{self.entity_name}.{entity_aspect_abbr}'
-        pattern_match_parts = entity_pattern.split('.')
-        entity_type_match = (pattern_match_parts[0] == "*") | (pattern_match_parts[0] == self.entity_type)
-        entity_aspect_match = (pattern_match_parts[2] == "*") | (pattern_match_parts[2] == entity_aspect_abbr)
+        # pattern_match_parts = entity_pattern.split('.')
+
+        entity_type_match = (len(entity_match['EntityTypes']) == 1 and entity_match['EntityTypes'][0] == '*') or self.entity_type in entity_match['EntityTypes']
+        # entity_type_match = (pattern_match_parts[0] == "*") | (pattern_match_parts[0] == self.entity_type)
+        entity_aspect_match = (len(entity_match['EntityAspects']) == 1 and entity_match['EntityAspects'][0] == '*') or self.entity_aspect in entity_match['EntityAspects']
+        # entity_aspect_match = (pattern_match_parts[2] == "*") | (pattern_match_parts[2] == self.entity_aspect)
         #TODO: Implement regex rules for supporting * wildcard
-        entity_name_match = pattern_match_parts[1] == self.entity_name
+        entity_name_match = (len(entity_match['EntityNames']) == 1 and entity_match['EntityNames'][0] == '*') or self.entity_name in entity_match['EntityNames']
         return entity_type_match & entity_name_match & entity_aspect_match
 
     def render_as_text(self, fields: dict = None):
@@ -48,8 +51,32 @@ class NoteDocument:
 
     #TODO: add remaining cases
     @staticmethod
-    def derive_entity_aspect_abbr(entity_aspect_arg):
-        if entity_aspect_arg == 'Toolbox':
+    def derive_entity_aspect_abbr(entity_aspect):
+        if entity_aspect == EntityAspect.WORK_JOURNAL:
+            return "nwdoc"
+        elif entity_aspect == EntityAspect.REFERENCE:
+            return "nodoc"
+        elif entity_aspect == EntityAspect.MEETING_JOURNAL:
+            return "njdoc"
+        elif entity_aspect == EntityAspect.DESIGN_JOURNAL:
+            return "ndsdoc"
+        elif entity_aspect == EntityAspect.TOOLBOX:
             return "ntlbox"
         else:
-            return "nwdoc"
+            return ''
+
+    #TODO: add remaining cases
+    @staticmethod
+    def derive_entity_aspect_from_abbr(entity_aspect_abbr):
+        if entity_aspect_abbr == 'nwdoc':
+            return EntityAspect.WORK_JOURNAL
+        elif entity_aspect_abbr == 'nodoc':
+            return EntityAspect.REFERENCE
+        elif entity_aspect_abbr == 'njdoc':
+            return EntityAspect.MEETING_JOURNAL
+        elif entity_aspect_abbr == 'ndsdoc':
+            return EntityAspect.DESIGN_JOURNAL
+        elif entity_aspect_abbr == 'ntlbox':
+            return EntityAspect.TOOLBOX
+        else:
+            return ''
