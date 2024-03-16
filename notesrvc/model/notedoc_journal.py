@@ -22,9 +22,12 @@ class NoteDocJournal(NoteDocument):
         match_notes = list()
         for note in self.notecoll.notes:
             if note.is_in_date_range(begin_date, end_date):
-                tags = note.get_tags(text_tag_type_matches)
-                if len(tags) > 0:
-                    match_notes.append({'NoteDoc': self, 'Note': note, 'Tags': tags})
+                if len(text_tag_type_matches) > 0:
+                    tags = note.get_tags(text_tag_type_matches)
+                    if len(tags) > 0:
+                        match_notes.append({'NoteDoc': self, 'Note': note, 'Tags': tags})
+                else:
+                    match_notes.append({'NoteDoc': self, 'Note': note, 'Tags': []})
 
         return match_notes
 
