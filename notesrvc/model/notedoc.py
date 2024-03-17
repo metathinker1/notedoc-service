@@ -33,18 +33,22 @@ class NoteDocument:
                 match_notes.append({'NoteDoc': self, 'Note': note, 'Tags': []})
         return match_notes
 
-    def is_entity_pattern_match(self, entity_match: dict) -> bool:
+    def is_entity_pattern_match(self, entity_matches: list) -> bool:
         # entity_match = {'EntityTypes': [entity_pattern_parts[0]], 'EntityNames': [entity_pattern_parts[1]], 'EntityAspects': [entity_aspect]}
         # notedoc_entity = f'{self.entity_type}.{self.entity_name}.{entity_aspect_abbr}'
         # pattern_match_parts = entity_pattern.split('.')
 
-        entity_type_match = (len(entity_match['EntityTypes']) == 1 and entity_match['EntityTypes'][0] == '*') or self.entity_type in entity_match['EntityTypes']
-        # entity_type_match = (pattern_match_parts[0] == "*") | (pattern_match_parts[0] == self.entity_type)
-        entity_aspect_match = (len(entity_match['EntityAspects']) == 1 and entity_match['EntityAspects'][0] == '*') or self.entity_aspect in entity_match['EntityAspects']
-        # entity_aspect_match = (pattern_match_parts[2] == "*") | (pattern_match_parts[2] == self.entity_aspect)
-        #TODO: Implement regex rules for supporting * wildcard
-        entity_name_match = (len(entity_match['EntityNames']) == 1 and entity_match['EntityNames'][0] == '*') or self.entity_name in entity_match['EntityNames']
-        return entity_type_match & entity_name_match & entity_aspect_match
+        for entity_match in entity_matches:
+            entity_type_match = (len(entity_match['EntityTypes']) == 1 and entity_match['EntityTypes'][0] == '*') or self.entity_type in entity_match['EntityTypes']
+            # entity_type_match = (pattern_match_parts[0] == "*") | (pattern_match_parts[0] == self.entity_type)
+            entity_aspect_match = (len(entity_match['EntityAspects']) == 1 and entity_match['EntityAspects'][0] == '*') or self.entity_aspect in entity_match['EntityAspects']
+            # entity_aspect_match = (pattern_match_parts[2] == "*") | (pattern_match_parts[2] == self.entity_aspect)
+            #TODO: Implement regex rules for supporting * wildcard
+            entity_name_match = (len(entity_match['EntityNames']) == 1 and entity_match['EntityNames'][0] == '*') or self.entity_name in entity_match['EntityNames']
+            if entity_type_match & entity_name_match & entity_aspect_match:
+                return True
+
+        return False
 
     def render_as_text(self, fields: dict = None):
         return self.notecoll.render_as_text()

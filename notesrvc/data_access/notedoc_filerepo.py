@@ -452,8 +452,10 @@ class NoteDocFileRepo:
         return report
 
     # TODO: Generalize -- currently requires TextTag, so specific to Status Report !!
+    # !! BE AWARE: not all possible cases have been tested !!
     def search_notes(self, search_dict: dict, text_tag_type_matches: list) -> list:
         entity_pattern = search_dict.get('entity_pattern')
+        entity_arg = search_dict.get('entity_arg')
         entity_name = search_dict.get('entity_name_arg')
         entity_aspect_arg = search_dict.get('entity_aspect_arg')
         entity_type = search_dict.get('entity_type')
@@ -474,6 +476,7 @@ class NoteDocFileRepo:
         #     for entity_aspect_string in entity_aspect_strings:
         #         entity_aspects.append(EntityAspect.map_from(entity_aspect_string))
 
+        entity_matches = []
         if entity_pattern:
             entity_pattern_parts = entity_pattern.split('.')
             #TODO: ternary
@@ -481,13 +484,25 @@ class NoteDocFileRepo:
                 entity_aspect = entity_pattern_parts[2]
             else:
                 entity_aspect = NoteDocument.derive_entity_aspect_from_abbr(entity_pattern_parts[2])
-            entity_match = {'EntityTypes': [entity_pattern_parts[0]], 'EntityNames': [entity_pattern_parts[1]], 'EntityAspects': [entity_aspect]}
+            entity_matches.append({'EntityTypes': [entity_pattern_parts[0]], 'EntityNames': [entity_pattern_parts[1]], 'EntityAspects': [entity_aspect]})
+        elif entity_arg:
+            entity_list = entity_arg.split(',')
+            for entity in entity_list:
+                entity_parts = entity.split('.')
+                if entity_aspect_arg:
+                    entity_aspects = entity_aspect_arg.split(',')
+                else:
+                    entity_aspects = '*'
+                entity_matches.append({'EntityTypes': [entity_parts[0]], 'EntityNames': [entity_parts[1]], 'EntityAspects': entity_aspects})
         else:
             # TODO: Generalize for all cases: entity_type, entity_name are comma list strings
-            entity_aspects = entity_aspect_arg.split(',')
+            if entity_aspect_arg:
+                entity_aspects = entity_aspect_arg.split(',')
+            else:
+                entity_aspects = '*'
             entity_type = entity_type if entity_type is not None else '*'
             entity_name = entity_name if entity_name is not None else '*'
-            entity_match = {'EntityTypes': [entity_type], 'EntityNames': [entity_name], 'EntityAspects': entity_aspects}
+            entity_matches.append({'EntityTypes': [entity_type], 'EntityNames': [entity_name], 'EntityAspects': entity_aspects})
 
 
         begin_date = None
@@ -500,9 +515,9 @@ class NoteDocFileRepo:
         search_results = []
         for notedoc in self.notedoc_repo_cache.values():
             # if NoteDocFileRepo._is_notedoc_file_in_search(notedoc, entity_pattern, entity_aspects, entity_type):
-            if notedoc.entity_name == 'NewRelic_Lambda':
+            if notedoc.entity_name == 'NewRelic_Lambda' or notedoc.entity_aspect == 'Reference':
                 print('stop here')
-            if notedoc.is_entity_pattern_match(entity_match):
+            if notedoc.is_entity_pattern_match(entity_matches):
                 if notedoc.structure == NoteDocStructure.JOURNAL:
                     # TODO: Implement filtering on search_term; Generalize beyond Status search
                     match_notes = notedoc.search_notes_text_tag(begin_date, end_date, text_tag_type_matches)

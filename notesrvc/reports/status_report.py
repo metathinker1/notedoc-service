@@ -26,7 +26,7 @@ class HTMLStatusReport(BaseStatusReport):
         if unique_entity:
             section_entity_header = f"<h3>{unique_entity}</h3>"
             report += section_header
-        elif unique_date:
+        if unique_date:
             date_section_header = f"<h3>{unique_date}</h3>"
             report += section_header
 
