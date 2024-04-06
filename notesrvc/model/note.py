@@ -62,6 +62,11 @@ class Note:
             print('stop here')
             return ''
 
+    def render_note_as_html_snippet(self):
+        body_text_as_html = self.body_text.replace('\n', '<br>')
+        return f'{self.summary_text}<br>{body_text_as_html}'
+
+
 # TODO: NoteDocOutline requires outline_location -- has to be done in that class
 #   So this base class would never be called ...
 #   OR: OutlineNote where outline_location is only in-memory ??

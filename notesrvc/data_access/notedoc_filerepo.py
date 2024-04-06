@@ -11,7 +11,7 @@ from notesrvc.service.nodedoc_parser import NoteDocParser
 from notesrvc.config import Config
 from notesrvc.data_access.person_repo import PersonRepo
 from notesrvc.data_access.workitem_filerepo import WorkItemFileRepo
-from notesrvc.constants import DATE_DASH_FORMAT
+from notesrvc.constants import DATE_DASH_FORMAT, DATE_FORMAT
 from notesrvc.reports.status_report import HTMLStatusReport
 
 # NOTEDOC_FILE_REPO_PATH = '/Users/robertwood/Google Drive/My Drive/AncNoteDocRepo/_Ancestry'
@@ -230,12 +230,32 @@ class NoteDocFileRepo:
                 done_workitems_report_data.append(report_entry)
             done_workitems_report_data.sort(key=self.report_sorter)
 
+        structured_report_data = NoteDocFileRepo._structure_report_data(report_data)
         if response_format == 'text':
             return NoteDocFileRepo._build_report(report_data, active_workitems_report_data, done_workitems_report_data, response_format)
         else:
-            return self.html_status_report.create_report(report_data)
+            return self.html_status_report.create_report(structured_report_data)
             # return NoteDocFileRepo._build_report(report_data, active_workitems_report_data, done_workitems_report_data, response_format)
             # return NoteDocFileRepo._build_report_as_html(report_data, active_workitems_report_data, done_workitems_report_data)
+
+
+    @staticmethod
+    def _structure_report_data(report_data: list) -> dict:
+        structured_report_data = dict()
+        for report_entry in report_data:
+            entry_entity = report_entry.get('Entity')
+            report_section_entity = structured_report_data.get(entry_entity)
+            if not report_section_entity:
+                structured_report_data[entry_entity] = dict()
+                report_section_entity = structured_report_data.get(entry_entity)
+            entry_date_str = report_entry.get('Date')
+            # entry_date_str = entry_date.strftime(DATE_FORMAT)
+            report_section_date = report_section_entity.get(entry_date_str)
+            if not report_section_date:
+                report_section_entity[entry_date_str] = list()
+                report_section_date = report_section_entity.get(entry_date_str)
+            report_section_date.append(report_entry)
+        return structured_report_data
 
     @staticmethod
     def _build_report(report_data: list, active_workitems_report_data: list, done_workitems_report_data: list, response_format: str):
@@ -280,7 +300,10 @@ class NoteDocFileRepo:
             if 'TagHeadline' in report_entry:
                 report += f"{report_entry['TagHeadline']}{le}"
             if 'TagBody' in report_entry:
-                report += f"{report_entry['TagBody']}{le}"
+                tag_body = report_entry['TagBody']
+                if response_format == 'html':
+                    tag_body = NoteDocFileRepo._tag_body_as_html_snippet(tag_body)
+                report += f"{tag_body}{le}"
             report += f"{lb}{le}"
             if not prev_entity_section_header:
                 prev_entity_section_header = section_entity_header
@@ -313,6 +336,10 @@ class NoteDocFileRepo:
             report += f"{lb}{le}"
 
         return report
+
+    @staticmethod
+    def _tag_body_as_html_snippet(tag_body: str):
+        return tag_body.replace('\n', '<br>')
 
     @staticmethod
     def _build_report_as_text(report_data: list, active_workitems_report_data: list, done_workitems_report_data: list):
