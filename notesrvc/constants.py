@@ -40,6 +40,7 @@ BEGIN_NOTE_PATTERN = '<Note [0-9]*>'
 BEGIN_JOURNAL_NOTE_PATTERN = r'<\d{4}.\d{2}.\d{2}[ ]\d{2}:\d{2}>'
 BEGIN_TEXT_TAG = '{TextTag:'
 END_MULTILINE_TAG = '}\\'
+END_MULTILINE_TAG_REGEX = '}\\\\'
 END_SINGLELINE_TAG = '}'
 
 BEGIN_WORKITEMS_SECTION = '{WorkItems:'

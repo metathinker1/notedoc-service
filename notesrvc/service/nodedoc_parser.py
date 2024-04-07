@@ -12,7 +12,7 @@ from notesrvc.config import Config
 from notesrvc.data_access.person_repo import PersonRepo
 from notesrvc.data_access.workitem_filerepo import WorkItemFileRepo
 from notesrvc.constants import BEGIN_NOTE_PATTERN, BEGIN_JOURNAL_NOTE_PATTERN, BEGIN_TEXT_TAG, END_MULTILINE_TAG, \
-    END_SINGLELINE_TAG, DATE_TIME_FORMAT, BEGIN_WORKITEMS_SECTION, END_WORKITEMS_SECTION, BEGIN_WORKITEM
+    END_SINGLELINE_TAG, DATE_TIME_FORMAT, BEGIN_WORKITEMS_SECTION, END_WORKITEMS_SECTION, BEGIN_WORKITEM, END_MULTILINE_TAG_REGEX
 
 config = Config()
 
@@ -90,12 +90,13 @@ class NoteDocParser:
         note_match = re.search(BEGIN_NOTE_PATTERN, line)
         journal_note_match = re.search(BEGIN_JOURNAL_NOTE_PATTERN, line)
         text_tag_match = re.search(BEGIN_TEXT_TAG, line)
+        text_tag_multiline_end_match = re.search(END_MULTILINE_TAG_REGEX, line)
         workitems_match = re.search(BEGIN_WORKITEMS_SECTION, line)
         if note_match:
             return NoteDocParser._new_note(line, parse_state)
         elif journal_note_match:
             return NoteDocParser._new_journal_note(line, parse_state)
-        elif text_tag_match:
+        elif text_tag_match or text_tag_multiline_end_match:
             return NoteDocParser._new_text_tag(line, parse_state)
         elif workitems_match:
             return NoteDocParser._workitems_section
@@ -199,9 +200,14 @@ class NoteDocParser:
                 text_tag = parse_state.tags.pop()
                 if len(parse_state.tags) > 0:
                     parse_state.current_tag = parse_state.tags[len(parse_state.tags)-1]
+                    # 2024.03.24
+                    return NoteDocParser._tag_body_text
                 else:
                     parse_state.current_tag = None
-                return NoteDocParser._body_text
+                    # 2024.03.24
+                    return NoteDocParser._body_text
+                # 2024.03.24
+                # return NoteDocParser._body_text
         elif text_tag_match:
             return NoteDocParser._new_text_tag(line, parse_state)
         else:

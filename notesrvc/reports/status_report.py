@@ -1,4 +1,7 @@
 
+from notesrvc.constants import DATE_FORMAT
+
+
 class BaseStatusReport:
 
     def __init__(self):
@@ -16,10 +19,35 @@ class BaseStatusReport:
 
 class HTMLStatusReport(BaseStatusReport):
 
-    def __init__(self):
-        pass
+    def __init__(self, active_entity_order):
+        self.active_entity_order = active_entity_order
 
-    def create_report(self, report_data: list) -> str:
+    def create_report(self, structured_report_data: dict) -> str:
+        report = ''
+        unique_entity = True if len(structured_report_data) == 0 else False
+        entity_keys = list(structured_report_data.keys())
+        entity_keys.sort(key=self.entity_sorter)
+        for section_entity in entity_keys:
+            if not unique_entity:
+                report += f"<h4>{section_entity}</h4>"
+            entity_section = structured_report_data.get(section_entity)
+            section_dates = list(entity_section.keys())
+            section_dates = sorted(section_dates, reverse=True)
+            for section_date in section_dates:
+                section_date_str = section_date.strftime(DATE_FORMAT)
+                report += f"<h4>{section_date_str}</h4>"
+                report_entries = entity_section.get(section_date)
+                for report_entry in report_entries:
+                    if 'TagType' in report_entry:
+                        report += f"<i>{report_entry['TagType']}</i>"
+                    if 'TagHeadline' in report_entry:
+                        report += f": {report_entry['TagHeadline']}<br>"
+                    if 'TagBody' in report_entry:
+                        tag_body = HTMLStatusReport._tag_body_as_html_snippet(report_entry['TagBody'])
+                        report += f"{tag_body}<br><br>"
+        return report
+
+    def create_report_tbd(self, report_data: list) -> str:
         report = ''
         unique_entity, unique_date = super()._derive_unique_entity_date_or_none(report_data)
         section_header = "Section"
@@ -53,7 +81,8 @@ class HTMLStatusReport(BaseStatusReport):
             if 'TagHeadline' in report_entry:
                 report += f": {report_entry['TagHeadline']}<br>"
             if 'TagBody' in report_entry:
-                report += f"{report_entry['TagBody']}<br>"
+                tag_body = HTMLStatusReport._tag_body_as_html_snippet(report_entry['TagBody'])
+                report += f"{tag_body}<br>"
             # report += f"<br>"
             if not prev_entity_section_header:
                 prev_entity_section_header = section_entity_header
@@ -65,3 +94,15 @@ class HTMLStatusReport(BaseStatusReport):
                 prev_date_section_header = None
 
         return report
+
+    def entity_sorter(self, e):
+        if e in self.active_entity_order:
+            return self.active_entity_order.get(e)
+        else:
+            return self.num_active_entities + 1
+
+
+
+    @staticmethod
+    def _tag_body_as_html_snippet(tag_body: str):
+        return tag_body.replace('\n', '<br>')
