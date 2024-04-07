@@ -40,7 +40,7 @@ class NoteDocFileRepo:
         self.num_active_entities = 0
         # self.manual_entity_type_map = dict()
 
-        self.html_status_report = HTMLStatusReport()
+        self.html_status_report = HTMLStatusReport(self.active_entity_order)
 
     def initialize_active_entities(self):
         file_name = config.notedoc_active_entities_file
@@ -186,7 +186,8 @@ class NoteDocFileRepo:
             notedoc = result.get('NoteDoc')
             note = result.get('Note')
             tags = result.get('Tags')
-            date_stamp = note.date_str
+            date_stamp = note.date_stamp
+            date_stamp_str = note.date_str
             for tag in tags:
                 report_entry = {
                     'Entity': f'{notedoc.entity_type}.{notedoc.entity_name}',
@@ -194,6 +195,7 @@ class NoteDocFileRepo:
                     'EntityName': notedoc.entity_name,
                     'EntityAspect': notedoc.entity_aspect,
                     'Date': date_stamp,
+                    'DateStr': date_stamp_str,
                     'TagType': tag.text_tag_type,
                     'TagHeadline': tag.headline_text,
                     'TagBody': tag.body_text
@@ -248,12 +250,11 @@ class NoteDocFileRepo:
             if not report_section_entity:
                 structured_report_data[entry_entity] = dict()
                 report_section_entity = structured_report_data.get(entry_entity)
-            entry_date_str = report_entry.get('Date')
-            # entry_date_str = entry_date.strftime(DATE_FORMAT)
-            report_section_date = report_section_entity.get(entry_date_str)
+            entry_date = report_entry.get('Date')
+            report_section_date = report_section_entity.get(entry_date)
             if not report_section_date:
-                report_section_entity[entry_date_str] = list()
-                report_section_date = report_section_entity.get(entry_date_str)
+                report_section_entity[entry_date] = list()
+                report_section_date = report_section_entity.get(entry_date)
             report_section_date.append(report_entry)
         return structured_report_data
 

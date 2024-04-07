@@ -1,4 +1,7 @@
 
+from notesrvc.constants import DATE_FORMAT
+
+
 class BaseStatusReport:
 
     def __init__(self):
@@ -16,18 +19,23 @@ class BaseStatusReport:
 
 class HTMLStatusReport(BaseStatusReport):
 
-    def __init__(self):
-        pass
+    def __init__(self, active_entity_order):
+        self.active_entity_order = active_entity_order
 
     def create_report(self, structured_report_data: dict) -> str:
         report = ''
         unique_entity = True if len(structured_report_data) == 0 else False
-        for section_entity in structured_report_data.keys():
+        entity_keys = list(structured_report_data.keys())
+        entity_keys.sort(key=self.entity_sorter)
+        for section_entity in entity_keys:
             if not unique_entity:
                 report += f"<h4>{section_entity}</h4>"
             entity_section = structured_report_data.get(section_entity)
-            for section_date in entity_section.keys():
-                report += f"<h4>{section_date}</h4>"
+            section_dates = list(entity_section.keys())
+            section_dates = sorted(section_dates, reverse=True)
+            for section_date in section_dates:
+                section_date_str = section_date.strftime(DATE_FORMAT)
+                report += f"<h4>{section_date_str}</h4>"
                 report_entries = entity_section.get(section_date)
                 for report_entry in report_entries:
                     if 'TagType' in report_entry:
@@ -86,6 +94,14 @@ class HTMLStatusReport(BaseStatusReport):
                 prev_date_section_header = None
 
         return report
+
+    def entity_sorter(self, e):
+        if e in self.active_entity_order:
+            return self.active_entity_order.get(e)
+        else:
+            return self.num_active_entities + 1
+
+
 
     @staticmethod
     def _tag_body_as_html_snippet(tag_body: str):
