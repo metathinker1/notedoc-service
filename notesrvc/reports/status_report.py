@@ -21,6 +21,7 @@ class HTMLStatusReport(BaseStatusReport):
 
     def __init__(self, active_entity_order):
         self.active_entity_order = active_entity_order
+        self.num_active_entities = 0
 
     def create_report(self, structured_report_data: dict) -> str:
         report = ''
