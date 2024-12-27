@@ -56,6 +56,7 @@ def get_status_report():
     begin_month_day_str = request.args.get('begin')
     end_month_day_str = request.args.get('end')
     # entity: <entity_type>.<entity_name>
+    ancestry_domain = request.args.get('anc_domain')
     entity = request.args.get('entity')
     incl_entity_children_str = request.args.get('children')
     incl_work_items_str = request.args.get('work')
@@ -91,7 +92,10 @@ def get_status_report():
             else:
                 end_date_str = end_month_day_str
 
-    report = notedoc_filerepo.create_status_report(begin_date_str, end_date_str, entity, incl_entity_children, incl_work_items, incl_summary_items, response_format)
+    if ancestry_domain:
+        report = notedoc_filerepo.create_ancestry_domain_status_report(begin_date_str, end_date_str, ancestry_domain, incl_summary_items, response_format)
+    else:
+        report = notedoc_filerepo.create_status_report(begin_date_str, end_date_str, entity, incl_entity_children, incl_work_items, incl_summary_items, response_format)
     return report
 
 
@@ -127,6 +131,7 @@ if __name__ == '__main__':
     logging.info('Starting Flask')
 
     notedoc_filerepo.initialize_active_entities()
+    notedoc_filerepo.initialize_domain_entities()
     person_repo.import_person_repo()
     notedoc_filerepo.import_active_notedocs()
     notedoc_filerepo.import_default_supported_notedocs()

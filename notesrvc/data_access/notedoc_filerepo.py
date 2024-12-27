@@ -34,6 +34,13 @@ class NoteDocFileRepo:
         self.supported_notedoc_types = ['nwdoc', 'nodoc', 'ndsdoc']
         self.default_import_notedoc_types = ['ntlbox', 'nwdoc', 'njdoc']
 
+        # CONTRAINT: Ancestry Domain Entity can appear in initial implementation due to report_sorter() implementation
+        # TODO: Refactor so that for Ancestry Domain there are two sort levels: across Domains; with Domains
+        self.ancestry_domain_notedoc_filenames = list()
+        self.ancestry_domain_entity_order = dict()
+        self.ancestry_domain_entities = dict()
+        self.num_ancestry_domain_entities = 0
+
         self.active_notedoc_filenames = list()
         self.active_entity_order = dict()
         self.active_entity_child_entities = dict()
@@ -41,6 +48,24 @@ class NoteDocFileRepo:
         # self.manual_entity_type_map = dict()
 
         self.html_status_report = HTMLStatusReport(self.active_entity_order)
+
+    def initialize_domain_entities(self):
+        file_name = config.ancestry_domain_entities_file_name
+        with open(file_name, 'r') as ancestry_domain_entities_file:
+            ancestry_domain_entities_json = ancestry_domain_entities_file.read()
+
+        ancestry_domain_entities_dict = json.loads(ancestry_domain_entities_json)
+        # ALERT: Don't start with 0, which evaluates to False
+        loc = 1
+        for ancestry_domain, entities in ancestry_domain_entities_dict.items():
+            loc += 1
+            self.ancestry_domain_entities[ancestry_domain] = entities.copy()
+            for ancestry_domain_entity in entities:
+                self.ancestry_domain_entity_order[ancestry_domain_entity] = loc
+                loc += 1
+        self.num_ancestry_domain_entities = loc
+
+        self._initialize_ancestry_domain_notedoc_filenames()
 
     def initialize_active_entities(self):
         file_name = config.notedoc_active_entities_file
@@ -73,6 +98,24 @@ class NoteDocFileRepo:
         #     'RDS_MetricHarvestProcessing': 'Project',
         #     'Terraform': 'AppDevTool',
         # }
+
+    def _initialize_ancestry_domain_notedoc_filenames(self):
+        for entity in self.ancestry_domain_entity_order.keys():
+            # For now, explicit rather than self.supported_notedoc_types, because each has special cases
+            file_name = f'{entity}.nwdoc'
+            if os.path.exists(f'{self.config.notedoc_repo_location}/{file_name}'):
+                self.ancestry_domain_notedoc_filenames.append(file_name)
+            # entity_name = entity.split('.')[1]
+            # file_name = f'Design.{entity_name}.nwdoc'
+            # if os.path.exists(f'{self.config.notedoc_repo_location}/{file_name}'):
+            #     self.active_notedoc_filenames.append(file_name)
+            file_name = f'{entity}.ndsdoc'
+            if os.path.exists(f'{self.config.notedoc_repo_location}/{file_name}'):
+                self.ancestry_domain_notedoc_filenames.append(file_name)
+
+            file_name = f'{entity}.nodoc'
+            if os.path.exists(f'{self.config.notedoc_repo_location}/{file_name}'):
+                self.ancestry_domain_notedoc_filenames.append(file_name)
 
     def _initialize_active_notedoc_filenames(self):
         for entity in self.active_entity_order.keys():
@@ -158,6 +201,53 @@ class NoteDocFileRepo:
         # self.search_cache
 
         return notedoc
+
+    def create_ancestry_domain_status_report(self, begin_date_str: str, end_date_str: str = None, ancestry_domain: str = None,
+                             incl_summary_items: bool = True, response_format: str = 'text') -> str:
+        search_results = self.search_journal_notes_by_ancestry_domain(begin_date=begin_date_str, end_date=end_date_str,
+                                                   ancestry_domain=ancestry_domain,
+                                                   incl_summary_items=incl_summary_items)
+        begin_date = datetime.strptime(begin_date_str, DATE_DASH_FORMAT)
+        end_date = None
+        if end_date_str:
+            end_date = datetime.strptime(end_date_str, DATE_DASH_FORMAT)
+
+        print(f'search_results: {search_results}')
+        report_data = list()
+
+        # TODO: suppress repeat Entity, Journal Date headings in report
+        last_notedoc_id = None
+        last_date_stamp = None
+        for result in search_results:
+            notedoc = result.get('NoteDoc')
+            note = result.get('Note')
+            tags = result.get('Tags')
+            date_stamp = note.date_stamp
+            date_stamp_str = note.date_str
+            for tag in tags:
+                report_entry = {
+                    'Entity': f'{notedoc.entity_type}.{notedoc.entity_name}',
+                    'EntityType': notedoc.entity_type,
+                    'EntityName': notedoc.entity_name,
+                    'EntityAspect': notedoc.entity_aspect,
+                    'Date': date_stamp,
+                    'DateStr': date_stamp_str,
+                    'TagType': tag.text_tag_type,
+                    'TagHeadline': tag.headline_text,
+                    'TagBody': tag.body_text
+                }
+                report_data.append(report_entry)
+
+        report_data.sort(key=self.report_sorter)
+
+        structured_report_data = NoteDocFileRepo._structure_report_data(report_data)
+        active_workitems_report_data = []
+        done_workitems_report_data = []
+        if response_format == 'text':
+            return NoteDocFileRepo._build_report(report_data, active_workitems_report_data, done_workitems_report_data, response_format)
+        else:
+            return self.html_status_report.create_report(structured_report_data)
+
 
     # TODO: Add sort: https://www.w3schools.com/python/ref_list_sort.asp
     # Entity: entity_type & entity_name: specific ordering; then alphabetical
@@ -570,6 +660,36 @@ class NoteDocFileRepo:
     #     # return match_name & match_aspect
     #
     #     return notedoc.is_entity_pattern_match(entity_pattern)
+
+    def search_journal_notes_by_ancestry_domain(self, **kwargs):
+        begin_date_str = kwargs.get('begin_date')
+        end_date_str = kwargs.get('end_date')
+        ancestry_domain = kwargs.get('ancestry_domain')
+        incl_summary_items = kwargs.get('incl_summary_items')
+
+        # print(begin_date_str)
+        begin_date = datetime.strptime(begin_date_str, DATE_DASH_FORMAT)
+        end_date = None
+        if end_date_str:
+            end_date = datetime.strptime(end_date_str, DATE_DASH_FORMAT)
+        # print(begin_date)
+
+        # TODO: populate search_dict and call search_notes() instead of below
+        # search_dict['entity_name_arg'] = ... join entity_name with any children, if true
+        #
+        search_dict = dict()
+        entity_list = self.ancestry_domain_entities.get(ancestry_domain, [])
+        search_dict['entity_arg'] = ','.join(entity_list)
+
+        search_dict['entity_aspect_arg'] = ','.join(EntityAspect.JOURNAL_ASPECTS)
+        search_dict['begin_date'] = begin_date_str
+        search_dict['end_date'] = end_date_str
+        # TODO: Move to constants: multiple lists
+        text_tag_type_matches = ['Status']
+        if incl_summary_items:
+            text_tag_type_matches.extend(['Summary', 'Work Summary', 'Support Summary', 'Discussion Summary', 'Meeting Summary'])
+
+        return self.search_notes(search_dict, text_tag_type_matches)
 
     def search_journal_notes(self, **kwargs):
         # for arg in kwargs:

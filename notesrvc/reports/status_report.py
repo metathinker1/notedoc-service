@@ -30,7 +30,7 @@ class HTMLStatusReport(BaseStatusReport):
         entity_keys.sort(key=self.entity_sorter)
         for section_entity in entity_keys:
             if not unique_entity:
-                report += f"<h4>{section_entity}</h4>"
+                report += f"<h4>Entity: {section_entity}</h4>"
             entity_section = structured_report_data.get(section_entity)
             section_dates = list(entity_section.keys())
             section_dates = sorted(section_dates, reverse=True)
