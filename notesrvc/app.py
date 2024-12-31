@@ -74,6 +74,90 @@ def get_status_report_v2():
     return report
 
 
+@app.route('/notedocsvc/report/keyinfo', methods=['GET'])
+def get_keyinfo_report():
+    days = request.args.get('days')
+    begin_month_day_str = request.args.get('begin')
+    end_month_day_str = request.args.get('end')
+    begin_date_str, end_date_str = derive_begin_end_dates(days, begin_month_day_str, end_month_day_str)
+    ancestry_domain = request.args.get('anc_domain')
+
+    text_tag_type_matches = ['KeyInfo']
+
+    entity_aspect_arg = ','.join(EntityAspect.JOURNAL_ASPECTS + EntityAspect.REFERENCE_ASPECTS)
+    response_format = request.args.get('format')
+    if not response_format:
+        response_format = 'text'
+
+    report = notedoc_filerepo.create_report(begin_date=begin_date_str, end_date=end_date_str, entity_aspect_arg=entity_aspect_arg,
+                                   text_tag_type_matches=text_tag_type_matches, ancestry_domain=ancestry_domain,
+                                   response_format=response_format)
+    return report
+
+
+@app.route('/notedocsvc/report/summz', methods=['GET'])
+def get_summrizer_report():
+    days = request.args.get('days')
+    begin_month_day_str = request.args.get('begin')
+    end_month_day_str = request.args.get('end')
+    begin_date_str, end_date_str = derive_begin_end_dates(days, begin_month_day_str, end_month_day_str)
+    ancestry_domain = request.args.get('anc_domain')
+
+    text_tag_type_matches = ['Summarizer']
+
+    entity_aspect_arg = ','.join(EntityAspect.JOURNAL_ASPECTS + EntityAspect.REFERENCE_ASPECTS)
+    response_format = request.args.get('format')
+    if not response_format:
+        response_format = 'text'
+
+    report = notedoc_filerepo.create_report(begin_date=begin_date_str, end_date=end_date_str, entity_aspect_arg=entity_aspect_arg,
+                                   text_tag_type_matches=text_tag_type_matches, ancestry_domain=ancestry_domain,
+                                   response_format=response_format)
+    return report
+
+
+@app.route('/notedocsvc/report/srvcflows', methods=['GET'])
+def get_service_flows_report():
+    days = request.args.get('days')
+    begin_month_day_str = request.args.get('begin')
+    end_month_day_str = request.args.get('end')
+    begin_date_str, end_date_str = derive_begin_end_dates(days, begin_month_day_str, end_month_day_str)
+    ancestry_domain = request.args.get('anc_domain')
+
+    text_tag_type_matches = ['SrvcFlows']
+
+    entity_aspect_arg = ','.join(EntityAspect.JOURNAL_ASPECTS + EntityAspect.REFERENCE_ASPECTS)
+    response_format = request.args.get('format')
+    if not response_format:
+        response_format = 'text'
+
+    report = notedoc_filerepo.create_report(begin_date=begin_date_str, end_date=end_date_str, entity_aspect_arg=entity_aspect_arg,
+                                   text_tag_type_matches=text_tag_type_matches, ancestry_domain=ancestry_domain,
+                                   response_format=response_format)
+    return report
+
+
+@app.route('/notedocsvc/report/deploychain', methods=['GET'])
+def get_deploychain_report():
+    days = request.args.get('days')
+    begin_month_day_str = request.args.get('begin')
+    end_month_day_str = request.args.get('end')
+    begin_date_str, end_date_str = derive_begin_end_dates(days, begin_month_day_str, end_month_day_str)
+    ancestry_domain = request.args.get('anc_domain')
+
+    text_tag_type_matches = ['DeployChain']
+
+    entity_aspect_arg = ','.join(EntityAspect.JOURNAL_ASPECTS + EntityAspect.REFERENCE_ASPECTS)
+    response_format = request.args.get('format')
+    if not response_format:
+        response_format = 'text'
+
+    report = notedoc_filerepo.create_report(begin_date=begin_date_str, end_date=end_date_str, entity_aspect_arg=entity_aspect_arg,
+                                   text_tag_type_matches=text_tag_type_matches, ancestry_domain=ancestry_domain,
+                                   response_format=response_format)
+    return report
+
+
 def derive_begin_end_dates(days, begin_month_day_str, end_month_day_str):
     if days:
         num_days_before = int(days)
