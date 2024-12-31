@@ -13,9 +13,12 @@ class EntityAspect:
     MEETING_JOURNAL = 'MeetingJournal'
     DESIGN_JOURNAL = 'DesignJournal'
     SUMMARIZER = 'Summarizer'
+    LEARNING_JOURNAL = 'LearningJournal'
+    TRAINING_JOURNAL = 'TrainingJournal'
+    SERVICE_FLOWS = 'ServiceFlows'
 
-    JOURNAL_ASPECTS = [MEETING_JOURNAL, WORK_JOURNAL, DESIGN_JOURNAL]
-    REFERENCE_ASPECTS = [REFERENCE, TOOLBOX, SUMMARIZER]
+    JOURNAL_ASPECTS = [MEETING_JOURNAL, WORK_JOURNAL, DESIGN_JOURNAL, LEARNING_JOURNAL, TRAINING_JOURNAL]
+    REFERENCE_ASPECTS = [REFERENCE, TOOLBOX, SERVICE_FLOWS, SUMMARIZER]
 
     # TODO: Confirm not required;  Or maybe use for abbreviations; Or simple validation
     @staticmethod
@@ -32,6 +35,13 @@ class EntityAspect:
             return EntityAspect.DESIGN_JOURNAL
         elif entity_aspect == 'Summarizer':
             return EntityAspect.SUMMARIZER
+        elif entity_aspect == 'LearningJournal':
+            return EntityAspect.LEARNING_JOURNAL
+        elif entity_aspect == 'TrainingJournal':
+            return EntityAspect.TRAINING_JOURNAL
+        elif entity_aspect == 'ServiceFlows':
+            return EntityAspect.SERVICE_FLOWS
+
         else:
             raise Exception(f'Not supported: {entity_aspect}')
 

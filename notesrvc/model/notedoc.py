@@ -1,4 +1,6 @@
 
+from datetime import datetime
+
 from notesrvc.model.notecoll import NoteCollection
 from notesrvc.model.note import Note
 from notesrvc.constants import EntityAspect
@@ -31,6 +33,19 @@ class NoteDocument:
                     num_match += 1
             if num_match == len(search_term_parts):
                 match_notes.append({'NoteDoc': self, 'Note': note, 'Tags': []})
+        return match_notes
+
+    def search_notes_text_tag(self, begin_date: datetime, end_date: datetime, text_tag_type_matches: list) -> list:
+        match_notes = list()
+        for note in self.notecoll.notes:
+            if note.is_in_date_range(begin_date, end_date):
+                if len(text_tag_type_matches) > 0:
+                    tags = note.get_tags(text_tag_type_matches)
+                    if len(tags) > 0:
+                        match_notes.append({'NoteDoc': self, 'Note': note, 'Tags': tags})
+                else:
+                    match_notes.append({'NoteDoc': self, 'Note': note, 'Tags': []})
+
         return match_notes
 
     def is_entity_pattern_match(self, entity_matches: list) -> bool:

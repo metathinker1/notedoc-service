@@ -49,6 +49,53 @@ def get_outline_text():
     else:
         return f"Unsupport format: {response_format}"
 
+@app.route('/notedocsvc/report/status', methods=['GET'])
+def get_status_report_v2():
+    days = request.args.get('days')
+    begin_month_day_str = request.args.get('begin')
+    end_month_day_str = request.args.get('end')
+    begin_date_str, end_date_str = derive_begin_end_dates(days, begin_month_day_str, end_month_day_str)
+    ancestry_domain = request.args.get('anc_domain')
+
+    incl_summary_items = True
+    text_tag_type_matches = ['Status']
+    if incl_summary_items:
+        text_tag_type_matches.extend(
+            ['Summary', 'Work Summary', 'Support Summary', 'Discussion Summary', 'Meeting Summary'])
+
+    entity_aspect_arg = ','.join(EntityAspect.JOURNAL_ASPECTS + EntityAspect.REFERENCE_ASPECTS)
+    response_format = request.args.get('format')
+    if not response_format:
+        response_format = 'text'
+
+    report = notedoc_filerepo.create_report(begin_date=begin_date_str, end_date=end_date_str, entity_aspect_arg=entity_aspect_arg,
+                                   text_tag_type_matches=text_tag_type_matches, ancestry_domain=ancestry_domain,
+                                   response_format=response_format)
+    return report
+
+
+def derive_begin_end_dates(days, begin_month_day_str, end_month_day_str):
+    if days:
+        num_days_before = int(days)
+        begin_date = datetime.now() - timedelta(days=num_days_before)
+        begin_date_str = begin_date.strftime(DATE_DASH_FORMAT)
+        end_date_str = None
+    else:
+        if begin_month_day_str:
+            if len(begin_month_day_str) == 5:
+                begin_date_str = f'2024-{begin_month_day_str}'
+            else:
+                begin_date_str = begin_month_day_str
+        else:
+            begin_date = datetime.now() - timedelta(days=1)
+            begin_date_str = begin_date.strftime(DATE_DASH_FORMAT)
+        end_date_str = None
+        if end_month_day_str:
+            if len(end_month_day_str) == 5:
+                end_date_str = f'2024-{end_month_day_str}'
+            else:
+                end_date_str = end_month_day_str
+    return begin_date_str, end_date_str
 
 @app.route('/notedocsvc/statusreport', methods=['GET'])
 def get_status_report():
@@ -134,7 +181,10 @@ if __name__ == '__main__':
     notedoc_filerepo.initialize_domain_entities()
     person_repo.import_person_repo()
     notedoc_filerepo.import_active_notedocs()
-    notedoc_filerepo.import_default_supported_notedocs()
+
+    # 2024.12.31
+    # notedoc_filerepo.import_default_supported_notedocs()
+    notedoc_filerepo.import_supported_notedocs()
 
     # TODO: Use configuration: by include_list or by_file_type ['nwdoc', 'nodoc', ...]
 

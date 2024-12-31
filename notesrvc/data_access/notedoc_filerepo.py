@@ -31,7 +31,7 @@ class NoteDocFileRepo:
 
         self.search_cache = dict()
 
-        self.supported_notedoc_types = ['nwdoc', 'nodoc', 'ndsdoc']
+        self.supported_notedoc_types = ['nwdoc', 'nodoc', 'ndsdoc', 'nflows', 'ntlbox', 'njdoc', 'nlearn', 'ntrain']
         self.default_import_notedoc_types = ['ntlbox', 'nwdoc', 'njdoc']
 
         # CONTRAINT: Ancestry Domain Entity can appear in initial implementation due to report_sorter() implementation
@@ -117,6 +117,27 @@ class NoteDocFileRepo:
             if os.path.exists(f'{self.config.notedoc_repo_location}/{file_name}'):
                 self.ancestry_domain_notedoc_filenames.append(file_name)
 
+            file_name = f'{entity}.nflows'
+            if os.path.exists(f'{self.config.notedoc_repo_location}/{file_name}'):
+                self.ancestry_domain_notedoc_filenames.append(file_name)
+
+            file_name = f'{entity}.ntlbox'
+            if os.path.exists(f'{self.config.notedoc_repo_location}/{file_name}'):
+                self.ancestry_domain_notedoc_filenames.append(file_name)
+
+            file_name = f'{entity}.njdoc'
+            if os.path.exists(f'{self.config.notedoc_repo_location}/{file_name}'):
+                self.ancestry_domain_notedoc_filenames.append(file_name)
+
+            file_name = f'{entity}.nlearn'
+            if os.path.exists(f'{self.config.notedoc_repo_location}/{file_name}'):
+                self.ancestry_domain_notedoc_filenames.append(file_name)
+
+            file_name = f'{entity}.ntrain'
+            if os.path.exists(f'{self.config.notedoc_repo_location}/{file_name}'):
+                self.ancestry_domain_notedoc_filenames.append(file_name)
+
+
     def _initialize_active_notedoc_filenames(self):
         for entity in self.active_entity_order.keys():
             # For now, explicit rather than self.supported_notedoc_types, because each has special cases
@@ -149,7 +170,11 @@ class NoteDocFileRepo:
         for notedoc_type in self.supported_notedoc_types:
             dir_path = f'{self.config.notedoc_repo_location}/*.{notedoc_type}'
             for file in glob.glob(dir_path, recursive=False):
-                self.get_notedoc(file, is_full_path=True)
+                # 2024.12.31
+                # self.get_notedoc(file, is_full_path=True)
+                file_path_parts = file.split('/')
+                file_name = file_path_parts[-1]
+                self.get_notedoc(file_name, is_full_path=False)
 
     def import_default_supported_notedocs(self):
         for notedoc_type in self.default_import_notedoc_types:
@@ -201,6 +226,44 @@ class NoteDocFileRepo:
         # self.search_cache
 
         return notedoc
+
+    def create_report(self, **kwargs):
+        search_results = self.prepare_notes_search(**kwargs)
+        response_format = kwargs.get('response_format')
+        report_data = list()
+
+        # TODO: suppress repeat Entity, Journal Date headings in report
+        last_notedoc_id = None
+        last_date_stamp = None
+        for result in search_results:
+            notedoc = result.get('NoteDoc')
+            note = result.get('Note')
+            tags = result.get('Tags')
+            date_stamp = note.date_stamp
+            date_stamp_str = note.date_str
+            for tag in tags:
+                report_entry = {
+                    'Entity': f'{notedoc.entity_type}.{notedoc.entity_name}',
+                    'EntityType': notedoc.entity_type,
+                    'EntityName': notedoc.entity_name,
+                    'EntityAspect': notedoc.entity_aspect,
+                    'Date': date_stamp,
+                    'DateStr': date_stamp_str,
+                    'TagType': tag.text_tag_type,
+                    'TagHeadline': tag.headline_text,
+                    'TagBody': tag.body_text
+                }
+                report_data.append(report_entry)
+
+        report_data.sort(key=self.report_sorter)
+
+        structured_report_data = NoteDocFileRepo._structure_report_data(report_data)
+        active_workitems_report_data = []
+        done_workitems_report_data = []
+        if response_format == 'text':
+            return NoteDocFileRepo._build_report(report_data, active_workitems_report_data, done_workitems_report_data, response_format)
+        else:
+            return self.html_status_report.create_report(structured_report_data)
 
     def create_ancestry_domain_status_report(self, begin_date_str: str, end_date_str: str = None, ancestry_domain: str = None,
                              incl_summary_items: bool = True, response_format: str = 'text') -> str:
@@ -569,7 +632,9 @@ class NoteDocFileRepo:
             report += f'{note.body_text}<br>'
         return report
 
-    # TODO: Generalize -- currently requires TextTag, so specific to Status Report !!
+    # 2024.12.30: Updated logic to support text_tag_type_matches for NoteDocStructure.OUTLINE
+    #   This required supporting either search_term OR text_tag_type_matches
+    # TODO: Generalize: to support both search_term AND text_tag_type_matches
     # !! BE AWARE: not all possible cases have been tested !!
     def search_notes(self, search_dict: dict, text_tag_type_matches: list) -> list:
         entity_pattern = search_dict.get('entity_pattern')
@@ -636,15 +701,24 @@ class NoteDocFileRepo:
             if notedoc.entity_name == 'NewRelic_Lambda' or notedoc.entity_aspect == 'Reference':
                 print('stop here')
             if notedoc.is_entity_pattern_match(entity_matches):
-                if notedoc.structure == NoteDocStructure.JOURNAL:
-                    # TODO: Implement filtering on search_term; Generalize beyond Status search
-                    match_notes = notedoc.search_notes_text_tag(begin_date, end_date, text_tag_type_matches)
-                    if len(match_notes) > 0:
-                        search_results.extend(match_notes)
-                elif notedoc.structure == NoteDocStructure.OUTLINE:
+                if search_term:
                     match_notes = notedoc.search_notes(search_term)
                     if len(match_notes) > 0:
                         search_results.extend(match_notes)
+                else:
+                    match_notes = notedoc.search_notes_text_tag(begin_date, end_date, text_tag_type_matches)
+                    if len(match_notes) > 0:
+                        search_results.extend(match_notes)
+                # 2024.12.30: This block replaced with new block above
+                # if notedoc.structure == NoteDocStructure.JOURNAL:
+                #     # TODO: Implement filtering on search_term; Generalize beyond Status search
+                #     match_notes = notedoc.search_notes_text_tag(begin_date, end_date, text_tag_type_matches)
+                #     if len(match_notes) > 0:
+                #         search_results.extend(match_notes)
+                # elif notedoc.structure == NoteDocStructure.OUTLINE:
+                #     match_notes = notedoc.search_notes(search_term)
+                #     if len(match_notes) > 0:
+                #         search_results.extend(match_notes)
         return search_results
 
 
@@ -660,6 +734,30 @@ class NoteDocFileRepo:
     #     # return match_name & match_aspect
     #
     #     return notedoc.is_entity_pattern_match(entity_pattern)
+
+    def prepare_notes_search(self, **kwargs):
+        search_dict = dict()
+        search_dict['begin_date'] = kwargs.get('begin_date')
+        search_dict['end_date'] = kwargs.get('end_date')
+        search_dict['entity_aspect_arg'] = kwargs.get('entity_aspect_arg')
+        entity = kwargs.get('entity')
+        ancestry_domain = kwargs.get('ancestry_domain')
+        if not entity and not ancestry_domain:
+            return []
+
+        if ancestry_domain:
+            entity_list = self.ancestry_domain_entities.get(ancestry_domain, [])
+        else:
+            incl_entity_children = kwargs.get('incl_entity_children')
+            entity_list = [entity]
+            if incl_entity_children and entity in self.active_entity_child_entities:
+                entity_list.extend(self.active_entity_child_entities[entity])
+
+        search_dict['entity_arg'] = ','.join(entity_list)
+
+        text_tag_type_matches = kwargs.get('text_tag_type_matches')
+
+        return self.search_notes(search_dict, text_tag_type_matches)
 
     def search_journal_notes_by_ancestry_domain(self, **kwargs):
         begin_date_str = kwargs.get('begin_date')
@@ -769,6 +867,13 @@ class NoteDocFileRepo:
             return EntityAspect.MEETING_JOURNAL, NoteDocStructure.JOURNAL
         elif file_name_parts[2] == 'nzdoc':
             return EntityAspect.SUMMARIZER, NoteDocStructure.OUTLINE
+        elif file_name_parts[2] == 'nflows':
+            return EntityAspect.SERVICE_FLOWS, NoteDocStructure.OUTLINE
+        elif file_name_parts[2] == 'nlearn':
+            return EntityAspect.LEARNING_JOURNAL, NoteDocStructure.OUTLINE
+        elif file_name_parts[2] == 'ntrain':
+            return EntityAspect.TRAINING_JOURNAL, NoteDocStructure.OUTLINE
+
         else:
             raise Exception(f'Not supported: {file_name_parts[2]}')
 
@@ -786,6 +891,12 @@ class NoteDocFileRepo:
             return 'njdoc'
         elif aspect == EntityAspect.SUMMARIZER:
             return 'nzdoc'
+        elif aspect == EntityAspect.SERVICE_FLOWS:
+            return 'flows'
+        elif aspect == EntityAspect.LEARNING_JOURNAL:
+            return 'nlearn'
+        elif aspect == EntityAspect.TRAINING_JOURNAL:
+            return 'ntrain'
         else:
             raise Exception(f'Not supported: {aspect}')
 
