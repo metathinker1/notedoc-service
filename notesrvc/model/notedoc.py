@@ -69,20 +69,20 @@ class NoteDocument:
         return self.notecoll.render_as_text()
 
     #TODO: add remaining cases
-    @staticmethod
-    def derive_entity_aspect_abbr(entity_aspect):
-        if entity_aspect == EntityAspect.WORK_JOURNAL:
-            return "nwdoc"
-        elif entity_aspect == EntityAspect.REFERENCE:
-            return "nodoc"
-        elif entity_aspect == EntityAspect.MEETING_JOURNAL:
-            return "njdoc"
-        elif entity_aspect == EntityAspect.DESIGN_JOURNAL:
-            return "ndsdoc"
-        elif entity_aspect == EntityAspect.TOOLBOX:
-            return "ntlbox"
-        else:
-            return ''
+    # @staticmethod
+    # def derive_entity_aspect_abbr(entity_aspect):
+    #     if entity_aspect == EntityAspect.WORK_JOURNAL:
+    #         return "nwdoc"
+    #     elif entity_aspect == EntityAspect.REFERENCE:
+    #         return "nodoc"
+    #     elif entity_aspect == EntityAspect.MEETING_JOURNAL:
+    #         return "njdoc"
+    #     elif entity_aspect == EntityAspect.DESIGN_JOURNAL:
+    #         return "ndsdoc"
+    #     elif entity_aspect == EntityAspect.TOOLBOX:
+    #         return "ntlbox"
+    #     else:
+    #         return ''
 
     #TODO: add remaining cases
     @staticmethod

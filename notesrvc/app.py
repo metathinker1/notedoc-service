@@ -271,7 +271,9 @@ def handle_search():
 if __name__ == '__main__':
     logging.info('Starting Flask')
 
+    # To Be Deprecated:
     notedoc_filerepo.initialize_active_entities()
+
     notedoc_filerepo.initialize_domain_entities()
     person_repo.import_person_repo()
     # 2024.12.31 - not needed with import_supported_notedocs()
