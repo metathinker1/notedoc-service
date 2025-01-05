@@ -27,6 +27,13 @@ def ping():
     return 'pong'
 
 
+@app.route('/notedocsvc/recent-entities', methods=['GET'])
+def get_recent_entities():
+    recent_active_entities_sorted = {k: v for k, v in sorted(notedoc_filerepo.recent_active_entities.items(), key=lambda item: item[0])}
+    recent_active_entities_json = json.dumps(recent_active_entities_sorted)
+    return recent_active_entities_json
+
+
 @app.route('/notedocsvc/outline/summary', methods=['GET'])
 def get_outline_text():
     entity_name = request.args.get('name')
@@ -48,6 +55,7 @@ def get_outline_text():
         return html_snippet
     else:
         return f"Unsupport format: {response_format}"
+
 
 @app.route('/notedocsvc/report/status', methods=['GET'])
 def get_status_report_v2():
@@ -182,6 +190,7 @@ def derive_begin_end_dates(days, begin_month_day_str, end_month_day_str):
                 end_date_str = end_month_day_str
     return begin_date_str, end_date_str
 
+# TODO: Deprecate
 @app.route('/notedocsvc/statusreport', methods=['GET'])
 def get_status_report():
     days = request.args.get('days')
@@ -265,7 +274,8 @@ if __name__ == '__main__':
     notedoc_filerepo.initialize_active_entities()
     notedoc_filerepo.initialize_domain_entities()
     person_repo.import_person_repo()
-    notedoc_filerepo.import_active_notedocs()
+    # 2024.12.31 - not needed with import_supported_notedocs()
+    # notedoc_filerepo.import_active_notedocs()
 
     # 2024.12.31
     # notedoc_filerepo.import_default_supported_notedocs()

@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 import glob
 import json
 import os
@@ -46,6 +46,8 @@ class NoteDocFileRepo:
         self.active_entity_child_entities = dict()
         self.num_active_entities = 0
         # self.manual_entity_type_map = dict()
+
+        self.recent_active_entities = dict()
 
         self.html_status_report = HTMLStatusReport(self.active_entity_order)
 
@@ -199,6 +201,10 @@ class NoteDocFileRepo:
             file_path = f'{self.config.notedoc_repo_location}/{file_name}'
         with open(file_path, 'rt', encoding='utf-8') as file:
             notedoc_text = file.read()
+            last_modified_epoch = os.path.getmtime(file_path)
+            last_modified_datetime = datetime.fromtimestamp(last_modified_epoch)
+            now_datetime = datetime.now()
+            last_modified_diff = now_datetime - last_modified_datetime
 
         print(f'Parsing file_name: {file_name}')
         # TODO: Consider: use class instead
@@ -224,6 +230,13 @@ class NoteDocFileRepo:
 
         # notedoc_search_dict = notedoc.render_as_search_dict()
         # self.search_cache
+
+        if last_modified_diff.days <= 180:
+            entity_type_name = f"{notedoc_metadata['EntityType']}.{notedoc_metadata['EntityName']}"
+            if entity_type_name not in self.recent_active_entities:
+                self.recent_active_entities[entity_type_name] = []
+            if notedoc_metadata['EntityAspect'] not in self.recent_active_entities[entity_type_name]:
+                self.recent_active_entities[entity_type_name].append(notedoc_metadata['EntityAspect'])
 
         return notedoc
 
