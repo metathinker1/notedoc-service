@@ -31,7 +31,7 @@ class NoteDocFileRepo:
 
         self.search_cache = dict()
 
-        self.supported_notedoc_types = ['nwdoc', 'nodoc', 'ndsdoc', 'nflows', 'ntlbox', 'njdoc', 'nlearn', 'ntrain']
+        self.supported_notedoc_types = ['nwdoc', 'nodoc', 'ndsdoc', 'nflows', 'ntlbox', 'njdoc', 'nosupp', 'nwsupp', 'nlearn', 'ntrain']
         self.default_import_notedoc_types = ['ntlbox', 'nwdoc', 'njdoc']
 
         # CONTRAINT: Ancestry Domain Entity can appear in initial implementation due to report_sorter() implementation
@@ -128,6 +128,14 @@ class NoteDocFileRepo:
                 self.ancestry_domain_notedoc_filenames.append(file_name)
 
             file_name = f'{entity}.njdoc'
+            if os.path.exists(f'{self.config.notedoc_repo_location}/{file_name}'):
+                self.ancestry_domain_notedoc_filenames.append(file_name)
+
+            file_name = f'{entity}.nosupp'
+            if os.path.exists(f'{self.config.notedoc_repo_location}/{file_name}'):
+                self.ancestry_domain_notedoc_filenames.append(file_name)
+
+            file_name = f'{entity}.nwsupp'
             if os.path.exists(f'{self.config.notedoc_repo_location}/{file_name}'):
                 self.ancestry_domain_notedoc_filenames.append(file_name)
 
@@ -886,6 +894,10 @@ class NoteDocFileRepo:
             return EntityAspect.LEARNING_JOURNAL, NoteDocStructure.OUTLINE
         elif file_name_parts[2] == 'ntrain':
             return EntityAspect.TRAINING_JOURNAL, NoteDocStructure.OUTLINE
+        elif file_name_parts[2] == 'nosupp':
+            return EntityAspect.SUPPORT_REFERENCE, NoteDocStructure.OUTLINE
+        elif file_name_parts[2] == 'nwsupp':
+            return EntityAspect.SUPPORT_JOURNAL, NoteDocStructure.JOURNAL
 
         else:
             raise Exception(f'Not supported: {file_name_parts[2]}')
@@ -910,6 +922,10 @@ class NoteDocFileRepo:
             return 'nlearn'
         elif aspect == EntityAspect.TRAINING_JOURNAL:
             return 'ntrain'
+        elif aspect == EntityAspect.SUPPORT_REFERENCE:
+            return 'nosupp'
+        elif aspect == EntityAspect.SUPPORT_JOURNAL:
+            return 'nwsupp'
         else:
             raise Exception(f'Not supported: {aspect}')
 
