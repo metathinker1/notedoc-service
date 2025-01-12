@@ -34,6 +34,14 @@ def get_recent_entities():
     return recent_active_entities_json
 
 
+@app.route('/notedocsvc/anc-domains', methods=['GET'])
+def get_anc_domains():
+    domains = list(notedoc_filerepo.ancestry_domain_entities.keys())
+    domains.sort()
+    domains_json = json.dumps(domains)
+    return domains_json
+
+
 @app.route('/notedocsvc/outline/summary', methods=['GET'])
 def get_outline_text():
     entity_name = request.args.get('name')
@@ -64,7 +72,7 @@ def get_status_report_v2():
     end_month_day_str = request.args.get('end')
     begin_date_str, end_date_str = derive_begin_end_dates(days, begin_month_day_str, end_month_day_str)
     entity = request.args.get('entity')
-    ancestry_domain = request.args.get('anc_domain')
+    ancestry_domain = request.args.get('domain')
 
     incl_summary_items = True
     text_tag_type_matches = ['Status']
