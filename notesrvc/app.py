@@ -89,6 +89,7 @@ def get_keyinfo_report():
     begin_month_day_str = request.args.get('begin')
     end_month_day_str = request.args.get('end')
     begin_date_str, end_date_str = derive_begin_end_dates(days, begin_month_day_str, end_month_day_str)
+    entity = request.args.get('entity')
     ancestry_domain = request.args.get('anc_domain')
 
     text_tag_type_matches = ['KeyInfo']
@@ -100,7 +101,7 @@ def get_keyinfo_report():
 
     report = notedoc_filerepo.create_report(begin_date=begin_date_str, end_date=end_date_str, entity_aspect_arg=entity_aspect_arg,
                                    text_tag_type_matches=text_tag_type_matches, ancestry_domain=ancestry_domain,
-                                   response_format=response_format)
+                                   entity=entity, response_format=response_format)
     return report
 
 
