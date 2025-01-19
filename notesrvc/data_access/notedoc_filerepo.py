@@ -763,16 +763,19 @@ class NoteDocFileRepo:
         search_dict['entity_aspect_arg'] = kwargs.get('entity_aspect_arg')
         entity = kwargs.get('entity')
         ancestry_domain = kwargs.get('ancestry_domain')
-        if not entity and not ancestry_domain:
-            return []
+        # 2025.01.19: Add support for "All Recent Entities"
+        # if not entity and not ancestry_domain:
+        #     return []
 
         if ancestry_domain:
             entity_list = self.ancestry_domain_entities.get(ancestry_domain, [])
-        else:
+        elif entity:
             incl_entity_children = kwargs.get('incl_entity_children')
             entity_list = [entity]
             if incl_entity_children and entity in self.active_entity_child_entities:
                 entity_list.extend(self.active_entity_child_entities[entity])
+        else:
+            entity_list = self.recent_active_entities.keys()
 
         search_dict['entity_arg'] = ','.join(entity_list)
 

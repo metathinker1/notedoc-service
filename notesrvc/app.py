@@ -73,8 +73,11 @@ def get_status_report_v2():
     begin_date_str, end_date_str = derive_begin_end_dates(days, begin_month_day_str, end_month_day_str)
     entity = request.args.get('entity')
     ancestry_domain = request.args.get('domain')
+    incl_summary_items_str = request.args.get('summary')
+    incl_summary_items = False
+    if incl_summary_items_str:
+        incl_summary_items = True if incl_summary_items_str.lower() == 'true' else False
 
-    incl_summary_items = True
     text_tag_type_matches = ['Status']
     if incl_summary_items:
         text_tag_type_matches.extend(
@@ -98,7 +101,7 @@ def get_keyinfo_report():
     end_month_day_str = request.args.get('end')
     begin_date_str, end_date_str = derive_begin_end_dates(days, begin_month_day_str, end_month_day_str)
     entity = request.args.get('entity')
-    ancestry_domain = request.args.get('anc_domain')
+    ancestry_domain = request.args.get('domain')
 
     text_tag_type_matches = ['KeyInfo']
 
