@@ -52,7 +52,10 @@ def get_outline_text():
     if not response_format:
         response_format = 'Text'
 
-    expand_list = expand_list_str.split(',')
+    expand_list = []
+    if expand_list_str:
+        expand_list = expand_list_str.split(',')
+
     # TODO: Add assertion on entity_aspect: only outline types
     # file_name = _derive_file_name(entity_name, entity_type, entity_aspect)
     # notedoc = notedoc_filerepo.get_notedoc(file_name)

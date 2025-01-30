@@ -68,7 +68,8 @@ class NoteDocOutline(NoteDocument):
         note_text = f"<p>{padding}{note_dict['Label']}:{note_dict['Summary']}</p>"
         if note_dict['Label'] in expand_list:
             note_text += ''
-            note_text += f"{note_dict['Body']}<br>"
+            body_text_as_html = note_dict['Body'].replace('\n', '<br>')
+            note_text += f"{body_text_as_html}<br>"
         return note_text
 
     def _calc_note_label(self, outline_location):
