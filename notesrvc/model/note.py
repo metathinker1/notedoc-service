@@ -15,7 +15,9 @@ class Note:
 
         self.standard_note_fields = ['Id', 'Summary', 'Body']
         self.default_fields = {'Fields': self.standard_note_fields, 'Tags': ['ALL']}
-        self.search_fields = {'Fields': ['Summary']}
+        # 2025.01.29: Add 'Body': optional, and controlled by expand_list
+        #   ASSUME: only used for Outlines
+        self.search_fields = {'Fields': ['Summary', 'Body']}
 
     def is_in_date_range(self, begin_date_range: datetime = None, end_date_range: datetime = None) -> bool:
         # Only JournalNote supports

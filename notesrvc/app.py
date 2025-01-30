@@ -47,9 +47,12 @@ def get_outline_text():
     entity_name = request.args.get('name')
     entity_type = request.args.get('type')
     entity_aspect = request.args.get('aspect')
+    expand_list_str = request.args.get('expand')
     response_format = request.args.get('format')
     if not response_format:
         response_format = 'Text'
+
+    expand_list = expand_list_str.split(',')
     # TODO: Add assertion on entity_aspect: only outline types
     # file_name = _derive_file_name(entity_name, entity_type, entity_aspect)
     # notedoc = notedoc_filerepo.get_notedoc(file_name)
@@ -59,7 +62,7 @@ def get_outline_text():
         outline_text = notedoc.render_as_outline_text()
         return outline_text
     elif response_format == 'html':
-        html_snippet = notedoc.render_as_html_snippet()
+        html_snippet = notedoc.render_as_html_snippet(expand_list)
         return html_snippet
     else:
         return f"Unsupport format: {response_format}"
