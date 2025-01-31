@@ -122,15 +122,99 @@ def get_keyinfo_report():
     return report
 
 
-@app.route('/notedocsvc/report/summz', methods=['GET'])
-def get_summrizer_report():
+@app.route('/notedocsvc/report/knowsumm', methods=['GET'])
+def get_knowsumm_report():
     days = request.args.get('days')
     begin_month_day_str = request.args.get('begin')
     end_month_day_str = request.args.get('end')
     begin_date_str, end_date_str = derive_begin_end_dates(days, begin_month_day_str, end_month_day_str)
     ancestry_domain = request.args.get('anc_domain')
 
-    text_tag_type_matches = ['Summarizer']
+    text_tag_type_matches = ['KnowSumm']
+
+    entity_aspect_arg = ','.join(EntityAspect.JOURNAL_ASPECTS + EntityAspect.REFERENCE_ASPECTS)
+    response_format = request.args.get('format')
+    if not response_format:
+        response_format = 'text'
+
+    report = notedoc_filerepo.create_report(begin_date=begin_date_str, end_date=end_date_str, entity_aspect_arg=entity_aspect_arg,
+                                   text_tag_type_matches=text_tag_type_matches, ancestry_domain=ancestry_domain,
+                                   response_format=response_format)
+    return report
+
+
+@app.route('/notedocsvc/report/milestone', methods=['GET'])
+def get_milestone_report():
+    days = request.args.get('days')
+    begin_month_day_str = request.args.get('begin')
+    end_month_day_str = request.args.get('end')
+    begin_date_str, end_date_str = derive_begin_end_dates(days, begin_month_day_str, end_month_day_str)
+    ancestry_domain = request.args.get('anc_domain')
+
+    text_tag_type_matches = ['Milestone']
+
+    entity_aspect_arg = ','.join(EntityAspect.JOURNAL_ASPECTS + EntityAspect.REFERENCE_ASPECTS)
+    response_format = request.args.get('format')
+    if not response_format:
+        response_format = 'text'
+
+    report = notedoc_filerepo.create_report(begin_date=begin_date_str, end_date=end_date_str, entity_aspect_arg=entity_aspect_arg,
+                                   text_tag_type_matches=text_tag_type_matches, ancestry_domain=ancestry_domain,
+                                   response_format=response_format)
+    return report
+
+
+@app.route('/notedocsvc/report/workitem', methods=['GET'])
+def get_workitem_report():
+    days = request.args.get('days')
+    begin_month_day_str = request.args.get('begin')
+    end_month_day_str = request.args.get('end')
+    begin_date_str, end_date_str = derive_begin_end_dates(days, begin_month_day_str, end_month_day_str)
+    ancestry_domain = request.args.get('anc_domain')
+
+    text_tag_type_matches = ['WorkItem']
+
+    entity_aspect_arg = ','.join(EntityAspect.JOURNAL_ASPECTS + EntityAspect.REFERENCE_ASPECTS)
+    response_format = request.args.get('format')
+    if not response_format:
+        response_format = 'text'
+
+    report = notedoc_filerepo.create_report(begin_date=begin_date_str, end_date=end_date_str, entity_aspect_arg=entity_aspect_arg,
+                                   text_tag_type_matches=text_tag_type_matches, ancestry_domain=ancestry_domain,
+                                   response_format=response_format)
+    return report
+
+
+@app.route('/notedocsvc/report/tracker', methods=['GET'])
+def get_tracker_report():
+    days = request.args.get('days')
+    begin_month_day_str = request.args.get('begin')
+    end_month_day_str = request.args.get('end')
+    begin_date_str, end_date_str = derive_begin_end_dates(days, begin_month_day_str, end_month_day_str)
+    ancestry_domain = request.args.get('anc_domain')
+
+    text_tag_type_matches = ['Tracker']
+
+    entity_aspect_arg = ','.join(EntityAspect.JOURNAL_ASPECTS + EntityAspect.REFERENCE_ASPECTS)
+    response_format = request.args.get('format')
+    if not response_format:
+        response_format = 'text'
+
+    report = notedoc_filerepo.create_report(begin_date=begin_date_str, end_date=end_date_str, entity_aspect_arg=entity_aspect_arg,
+                                   text_tag_type_matches=text_tag_type_matches, ancestry_domain=ancestry_domain,
+                                   response_format=response_format)
+    return report
+
+
+@app.route('/notedocsvc/report/learn', methods=['GET'])
+def get_learn_report():
+    days = request.args.get('days')
+    begin_month_day_str = request.args.get('begin')
+    end_month_day_str = request.args.get('end')
+    begin_date_str, end_date_str = derive_begin_end_dates(days, begin_month_day_str, end_month_day_str)
+    ancestry_domain = request.args.get('anc_domain')
+
+    text_tag_type_matches = ['Learn']
 
     entity_aspect_arg = ','.join(EntityAspect.JOURNAL_ASPECTS + EntityAspect.REFERENCE_ASPECTS)
     response_format = request.args.get('format')
@@ -152,27 +236,6 @@ def get_service_flows_report():
     ancestry_domain = request.args.get('anc_domain')
 
     text_tag_type_matches = ['SrvcFlows']
-
-    entity_aspect_arg = ','.join(EntityAspect.JOURNAL_ASPECTS + EntityAspect.REFERENCE_ASPECTS)
-    response_format = request.args.get('format')
-    if not response_format:
-        response_format = 'text'
-
-    report = notedoc_filerepo.create_report(begin_date=begin_date_str, end_date=end_date_str, entity_aspect_arg=entity_aspect_arg,
-                                   text_tag_type_matches=text_tag_type_matches, ancestry_domain=ancestry_domain,
-                                   response_format=response_format)
-    return report
-
-
-@app.route('/notedocsvc/report/deploychain', methods=['GET'])
-def get_deploychain_report():
-    days = request.args.get('days')
-    begin_month_day_str = request.args.get('begin')
-    end_month_day_str = request.args.get('end')
-    begin_date_str, end_date_str = derive_begin_end_dates(days, begin_month_day_str, end_month_day_str)
-    ancestry_domain = request.args.get('anc_domain')
-
-    text_tag_type_matches = ['DeployChain']
 
     entity_aspect_arg = ','.join(EntityAspect.JOURNAL_ASPECTS + EntityAspect.REFERENCE_ASPECTS)
     response_format = request.args.get('format')
