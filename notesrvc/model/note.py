@@ -21,7 +21,9 @@ class Note:
 
     def is_in_date_range(self, begin_date_range: datetime = None, end_date_range: datetime = None) -> bool:
         # Only JournalNote supports
-        return False
+        # return False
+        # 2025.01.31: Only JournalNote supports date_stamp; others should return True instead - effectively no filter
+        return True
 
     def get_tags(self, text_tag_type_matches: list):
         return_tags = list()
@@ -87,7 +89,9 @@ class JournalNote(Note):
 
     def is_in_date_range(self, begin_date_range: datetime = None, end_date_range: datetime = None) -> bool:
         if not self.date_stamp:
-            return False
+            # 2025.01.31: should return True instead - effectively no filter
+            # return False
+            return True
 
         if begin_date_range and end_date_range:
             return self.date_stamp >= begin_date_range and self.date_stamp <= end_date_range

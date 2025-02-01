@@ -260,8 +260,13 @@ class NoteDocFileRepo:
             notedoc = result.get('NoteDoc')
             note = result.get('Note')
             tags = result.get('Tags')
-            date_stamp = note.date_stamp
-            date_stamp_str = note.date_str
+            # 2025.01.31: Support Outline, which does not have note.date_stamp
+            if notedoc.structure == 'Outline':
+                date_stamp = None
+                date_stamp_str = None
+            else:
+                date_stamp = note.date_stamp
+                date_stamp_str = note.date_str
             for tag in tags:
                 report_entry = {
                     'Entity': f'{notedoc.entity_type}.{notedoc.entity_name}',
@@ -425,6 +430,9 @@ class NoteDocFileRepo:
                 structured_report_data[entry_entity] = dict()
                 report_section_entity = structured_report_data.get(entry_entity)
             entry_date = report_entry.get('Date')
+            # 2025.01.31: Support Outline, which does not have note.date_stamp
+            if not entry_date:
+                entry_date = datetime.now()
             report_section_date = report_section_entity.get(entry_date)
             if not report_section_date:
                 report_section_entity[entry_date] = list()
@@ -719,7 +727,7 @@ class NoteDocFileRepo:
         search_results = []
         for notedoc in self.notedoc_repo_cache.values():
             # if NoteDocFileRepo._is_notedoc_file_in_search(notedoc, entity_pattern, entity_aspects, entity_type):
-            if notedoc.entity_name == 'NewRelic_Lambda' or notedoc.entity_aspect == 'Reference':
+            if notedoc.entity_name == 'DeveloperPortal' and notedoc.entity_aspect == 'Reference':
                 print('stop here')
             if notedoc.is_entity_pattern_match(entity_matches):
                 if search_term:
