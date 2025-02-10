@@ -128,6 +128,7 @@ def get_knowsumm_report():
     begin_month_day_str = request.args.get('begin')
     end_month_day_str = request.args.get('end')
     begin_date_str, end_date_str = derive_begin_end_dates(days, begin_month_day_str, end_month_day_str)
+    entity = request.args.get('entity')
     ancestry_domain = request.args.get('anc_domain')
 
     text_tag_type_matches = ['KnowSumm']
@@ -139,7 +140,7 @@ def get_knowsumm_report():
 
     report = notedoc_filerepo.create_report(begin_date=begin_date_str, end_date=end_date_str, entity_aspect_arg=entity_aspect_arg,
                                    text_tag_type_matches=text_tag_type_matches, ancestry_domain=ancestry_domain,
-                                   response_format=response_format)
+                                   entity=entity, response_format=response_format)
     return report
 
 
@@ -149,6 +150,7 @@ def get_milestone_report():
     begin_month_day_str = request.args.get('begin')
     end_month_day_str = request.args.get('end')
     begin_date_str, end_date_str = derive_begin_end_dates(days, begin_month_day_str, end_month_day_str)
+    entity = request.args.get('entity')
     ancestry_domain = request.args.get('anc_domain')
 
     text_tag_type_matches = ['Milestone']
@@ -160,7 +162,7 @@ def get_milestone_report():
 
     report = notedoc_filerepo.create_report(begin_date=begin_date_str, end_date=end_date_str, entity_aspect_arg=entity_aspect_arg,
                                    text_tag_type_matches=text_tag_type_matches, ancestry_domain=ancestry_domain,
-                                   response_format=response_format)
+                                   entity=entity, response_format=response_format)
     return report
 
 
@@ -170,6 +172,7 @@ def get_workitem_report():
     begin_month_day_str = request.args.get('begin')
     end_month_day_str = request.args.get('end')
     begin_date_str, end_date_str = derive_begin_end_dates(days, begin_month_day_str, end_month_day_str)
+    entity = request.args.get('entity')
     ancestry_domain = request.args.get('anc_domain')
 
     text_tag_type_matches = ['WorkItem']
@@ -181,7 +184,7 @@ def get_workitem_report():
 
     report = notedoc_filerepo.create_report(begin_date=begin_date_str, end_date=end_date_str, entity_aspect_arg=entity_aspect_arg,
                                    text_tag_type_matches=text_tag_type_matches, ancestry_domain=ancestry_domain,
-                                   response_format=response_format)
+                                   entity=entity, response_format=response_format)
     return report
 
 
@@ -191,6 +194,7 @@ def get_tracker_report():
     begin_month_day_str = request.args.get('begin')
     end_month_day_str = request.args.get('end')
     begin_date_str, end_date_str = derive_begin_end_dates(days, begin_month_day_str, end_month_day_str)
+    entity = request.args.get('entity')
     ancestry_domain = request.args.get('anc_domain')
 
     text_tag_type_matches = ['Tracker']
@@ -202,7 +206,7 @@ def get_tracker_report():
 
     report = notedoc_filerepo.create_report(begin_date=begin_date_str, end_date=end_date_str, entity_aspect_arg=entity_aspect_arg,
                                    text_tag_type_matches=text_tag_type_matches, ancestry_domain=ancestry_domain,
-                                   response_format=response_format)
+                                   entity=entity, response_format=response_format)
     return report
 
 
@@ -212,6 +216,7 @@ def get_learn_report():
     begin_month_day_str = request.args.get('begin')
     end_month_day_str = request.args.get('end')
     begin_date_str, end_date_str = derive_begin_end_dates(days, begin_month_day_str, end_month_day_str)
+    entity = request.args.get('entity')
     ancestry_domain = request.args.get('anc_domain')
 
     text_tag_type_matches = ['Learn']
@@ -223,7 +228,51 @@ def get_learn_report():
 
     report = notedoc_filerepo.create_report(begin_date=begin_date_str, end_date=end_date_str, entity_aspect_arg=entity_aspect_arg,
                                    text_tag_type_matches=text_tag_type_matches, ancestry_domain=ancestry_domain,
-                                   response_format=response_format)
+                                   entity=entity, response_format=response_format)
+    return report
+
+
+@app.route('/notedocsvc/report/tool', methods=['GET'])
+def get_tool_report():
+    days = request.args.get('days')
+    begin_month_day_str = request.args.get('begin')
+    end_month_day_str = request.args.get('end')
+    begin_date_str, end_date_str = derive_begin_end_dates(days, begin_month_day_str, end_month_day_str)
+    entity = request.args.get('entity')
+    ancestry_domain = request.args.get('anc_domain')
+
+    text_tag_type_matches = ['Tool']
+
+    entity_aspect_arg = ','.join(EntityAspect.JOURNAL_ASPECTS + EntityAspect.REFERENCE_ASPECTS)
+    response_format = request.args.get('format')
+    if not response_format:
+        response_format = 'text'
+
+    report = notedoc_filerepo.create_report(begin_date=begin_date_str, end_date=end_date_str, entity_aspect_arg=entity_aspect_arg,
+                                   text_tag_type_matches=text_tag_type_matches, ancestry_domain=ancestry_domain,
+                                   entity=entity, response_format=response_format)
+    return report
+
+
+@app.route('/notedocsvc/report/manager', methods=['GET'])
+def get_manager_report():
+    days = request.args.get('days')
+    begin_month_day_str = request.args.get('begin')
+    end_month_day_str = request.args.get('end')
+    begin_date_str, end_date_str = derive_begin_end_dates(days, begin_month_day_str, end_month_day_str)
+    entity = request.args.get('entity')
+    ancestry_domain = request.args.get('anc_domain')
+
+    text_tag_type_matches = ['Manager Priorities', 'Manager Status', 'Sev-1 Incident', 'KeyNumber']
+
+    entity_aspect_arg = ','.join(EntityAspect.JOURNAL_ASPECTS + EntityAspect.REFERENCE_ASPECTS)
+    response_format = request.args.get('format')
+    if not response_format:
+        response_format = 'text'
+
+    report = notedoc_filerepo.create_report(begin_date=begin_date_str, end_date=end_date_str, entity_aspect_arg=entity_aspect_arg,
+                                   text_tag_type_matches=text_tag_type_matches, ancestry_domain=ancestry_domain,
+                                   entity=entity, response_format=response_format)
     return report
 
 
