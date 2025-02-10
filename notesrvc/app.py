@@ -263,7 +263,8 @@ def get_manager_report():
     entity = request.args.get('entity')
     ancestry_domain = request.args.get('anc_domain')
 
-    text_tag_type_matches = ['Manager Priorities', 'Manager Status', 'Sev-1 Incident', 'KeyNumber']
+    # Add 'Manager Status' after some cleanup / refactoring
+    text_tag_type_matches = ['Manager Priorities', 'Sev-1 Incident', 'KeyNumber']
 
     entity_aspect_arg = ','.join(EntityAspect.JOURNAL_ASPECTS + EntityAspect.REFERENCE_ASPECTS)
     response_format = request.args.get('format')
