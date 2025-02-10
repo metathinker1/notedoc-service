@@ -669,8 +669,8 @@ class NoteDocFileRepo:
         entity_pattern = search_dict.get('entity_pattern')
         entity_arg = search_dict.get('entity_arg')
         entity_name = search_dict.get('entity_name_arg')
-        entity_aspect_arg = search_dict.get('entity_aspect_arg')
         entity_type = search_dict.get('entity_type')
+        entity_aspect_arg = search_dict.get('entity_aspect_arg')
 
         begin_date_str = search_dict.get('begin_date')
         end_date_str = search_dict.get('end_date')
@@ -699,13 +699,29 @@ class NoteDocFileRepo:
             entity_matches.append({'EntityTypes': [entity_pattern_parts[0]], 'EntityNames': [entity_pattern_parts[1]], 'EntityAspects': [entity_aspect]})
         elif entity_arg:
             entity_list = entity_arg.split(',')
-            for entity in entity_list:
-                entity_parts = entity.split('.')
-                if entity_aspect_arg:
-                    entity_aspects = entity_aspect_arg.split(',')
+            # 2025.02.09: Added this missing block:
+            if len(entity_list) == 1:
+                entity_parts = entity_arg.split('.')
+                if len(entity_parts) == 2:
+                    entity_type = entity_type if entity_type is not None else entity_parts[0]
+                    entity_name = entity_name if entity_name is not None else entity_parts[1]
+                    if entity_aspect_arg:
+                        entity_aspects = entity_aspect_arg.split(',')
+                    else:
+                        entity_aspects = '*'
+                    entity_matches.append({'EntityTypes': [entity_type], 'EntityNames': [entity_name], 'EntityAspects': entity_aspects})
                 else:
-                    entity_aspects = '*'
-                entity_matches.append({'EntityTypes': [entity_parts[0]], 'EntityNames': [entity_parts[1]], 'EntityAspects': entity_aspects})
+                    print(f'ERROR: {entity_arg=} is malformed -- expected <EntityType>.<EntityName')
+                    search_results = []
+                    return search_results
+            else:
+                for entity in entity_list:
+                    entity_parts = entity.split('.')
+                    if entity_aspect_arg:
+                        entity_aspects = entity_aspect_arg.split(',')
+                    else:
+                        entity_aspects = '*'
+                    entity_matches.append({'EntityTypes': [entity_parts[0]], 'EntityNames': [entity_parts[1]], 'EntityAspects': entity_aspects})
         else:
             # TODO: Generalize for all cases: entity_type, entity_name are comma list strings
             if entity_aspect_arg:
@@ -727,7 +743,7 @@ class NoteDocFileRepo:
         search_results = []
         for notedoc in self.notedoc_repo_cache.values():
             # if NoteDocFileRepo._is_notedoc_file_in_search(notedoc, entity_pattern, entity_aspects, entity_type):
-            if notedoc.entity_name == 'DeveloperPortal' and notedoc.entity_aspect == 'Reference':
+            if notedoc.entity_name == 'Python' and notedoc.entity_aspect == 'Reference':
                 print('stop here')
             if notedoc.is_entity_pattern_match(entity_matches):
                 if search_term:
